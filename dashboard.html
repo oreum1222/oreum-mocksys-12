@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오름 모의고사 진단 — 고1·고2 강사 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-deep:#4a5a3a;--gold:#c9a84c;--gold-soft:#d4b966;--cream:#f4ede0;
+  --bg-dark:#1a1f15;--bg-card:#252b1f;--bg-card-hover:#2d3326;
+  --text-primary:#f4ede0;--text-secondary:#b8b09e;--text-muted:#7a7466;
+  --border-soft:rgba(201,168,76,0.18);--border-line:rgba(244,237,224,0.08);
+  --danger:#c66;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg-dark);color:var(--text-primary);min-height:100vh;line-height:1.7}
+.wrap{max-width:1240px;margin:0 auto;padding:48px 24px}
+h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:1.85rem;color:var(--cream);margin-bottom:6px}
+.sub{color:var(--text-muted);font-size:0.88rem;margin-bottom:36px;letter-spacing:1px}
+.section{background:var(--bg-card);border:1px solid var(--border-line);border-radius:6px;padding:32px;margin-bottom:24px}
+.section-title{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.92rem;letter-spacing:2.5px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border-soft)}
+input,select,button{font-family:inherit;font-size:0.92rem}
+input,select{background:var(--bg-dark);border:1px solid var(--border-line);border-radius:4px;padding:11px 14px;color:var(--cream);transition:border-color 0.15s}
+input:focus,select:focus{outline:none;border-color:var(--gold)}
+button{background:var(--gold);color:var(--bg-dark);border:none;padding:11px 24px;border-radius:4px;cursor:pointer;font-weight:500;letter-spacing:0.5px}
+button:hover{background:var(--gold-soft)}
+button.ghost{background:transparent;color:var(--text-primary);border:1px solid var(--border-soft)}
+button.ghost:hover{background:var(--bg-card-hover);border-color:var(--gold);color:var(--gold)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.error{color:var(--danger);padding:14px 18px;background:rgba(198,102,102,0.1);border-radius:4px;margin:14px 0;font-size:0.88rem;border:1px solid rgba(198,102,102,0.3)}
+.ok{color:var(--cream);padding:14px 18px;background:rgba(74,90,58,0.2);border-radius:4px;margin:14px 0;font-size:0.88rem;border:1px solid var(--green-deep)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--bg-dark);border:1px solid var(--border-line);border-radius:5px;padding:18px;text-align:center}
+.stat-label{font-size:0.74rem;color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px}
+.stat-num{font-family:'Noto Serif KR',serif;color:var(--gold);font-weight:700;font-size:1.8rem;line-height:1}
+table{width:100%;border-collapse:collapse;font-size:0.88rem}
+th{font-family:'Noto Serif KR',serif;color:var(--gold);text-align:left;padding:14px 12px;font-size:0.78rem;letter-spacing:1.5px;font-weight:500;border-bottom:1px solid var(--border-soft)}
+td{padding:13px 12px;color:var(--text-secondary);border-bottom:1px solid var(--border-line);font-size:0.88rem}
+tr:hover td{background:var(--bg-card-hover);color:var(--cream)}
+.tag{display:inline-block;padding:2px 8px;border-radius:9px;font-size:0.72rem;letter-spacing:0.5px}
+.tag-exam{background:rgba(74,90,58,0.4);color:var(--cream);border:1px solid var(--green-deep)}
+.tag-year{background:rgba(244,237,224,0.06);color:var(--text-secondary);border:1px solid var(--border-soft)}
+.tag-grade{background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:500}
+.tag-student-grade{background:rgba(201,168,76,0.08);color:var(--gold-soft);border:1px solid rgba(201,168,76,0.25);font-weight:500}
+.empty{text-align:center;color:var(--text-muted);padding:48px 0;font-style:italic;font-size:0.92rem}
+.hide{display:none}
+@media (max-width:640px){
+  .wrap{padding:32px 16px}
+  .row{flex-direction:column;align-items:stretch}
+  .row input,.row select,.row button{width:100%}
+  table{font-size:0.78rem}
+  th,td{padding:10px 6px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>오름 모의고사 진단 — 강사 대시보드</h1>
+<p class="sub">가경T · 오름 국어 연구소 · 고 1 · 고 2</p>
+
+<!-- 비밀번호 게이트 -->
+<div id="gate" class="section">
+  <div class="section-title">관리자 인증</div>
+  <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:20px">대시보드에 접근하려면 관리자 비밀번호를 입력해 주세요.</p>
+  <div class="row">
+    <input id="pwInput" type="password" placeholder="비밀번호" style="flex:1;min-width:200px" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()">로그인</button>
+  </div>
+  <div id="gateMsg"></div>
+</div>
+
+<!-- 메인 -->
+<div id="main" class="hide">
+
+  <div class="section">
+    <div class="section-title">조회 조건</div>
+    <div class="row">
+      <select id="gradeSelect" style="min-width:120px">
+        <option value="all">전체 학년</option>
+        <option value="고1">고 1</option>
+        <option value="고2">고 2</option>
+      </select>
+      <select id="examSelect" style="min-width:300px">
+        <!-- rebuildExamSelect()로 동적 생성 -->
+      </select>
+      <input id="searchInput" type="text" placeholder="이름 · 학교 검색" style="flex:1;min-width:180px">
+      <button onclick="loadData()">새로고침</button>
+      <button class="ghost" onclick="logout()">로그아웃</button>
+    </div>
+    <div id="loadMsg"></div>
+  </div>
+
+  <div id="statsBox"></div>
+
+  <div class="section">
+    <div class="section-title">응답 목록</div>
+    <div id="tableBox"><div class="empty">데이터를 불러오는 중...</div></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ───── EXAM_LIST — index.html과 동일 유지 (새 회차 추가 시 둘 다 갱신) ─────
+const EXAM_LIST = [
+  // 고1 — 2021년 (최신 → 과거)
+  { id:'2021-11-go1', grade:'go1', gradeLabel:'고1', year:'2021', month:11,
+    no:'제 6 회', label:'2021학년도 11월 고1 학평' },
+  { id:'2021-09-go1', grade:'go1', gradeLabel:'고1', year:'2021', month:9,
+    no:'제 5 회', label:'2021학년도 9월 고1 학평' },
+  { id:'2021-06-go1', grade:'go1', gradeLabel:'고1', year:'2021', month:6,
+    no:'제 4 회', label:'2021학년도 6월 고1 학평' },
+  { id:'2021-03-go1', grade:'go1', gradeLabel:'고1', year:'2021', month:3,
+    no:'제 3 회', label:'2021학년도 3월 고1 학평' },
+  // 고1 — 2020년
+  { id:'2020-06-go1', grade:'go1', gradeLabel:'고1', year:'2020', month:6,
+    no:'제 2 회', label:'2020학년도 6월 고1 학평' },
+  { id:'2020-03-go1', grade:'go1', gradeLabel:'고1', year:'2020', month:3,
+    no:'제 1 회', label:'2020학년도 3월 고1 학평' },
+];
+
+// ───── config.js 로드 ─────
+let SCRIPT_URL = null, DASH_PASSWORD = null;
+function loadConfig(){
+  return new Promise(resolve=>{
+    const s = document.createElement('script');
+    s.src = 'config.js?v='+Date.now();
+    s.onload = ()=>{
+      if(window.OREUM_CONFIG){
+        SCRIPT_URL = window.OREUM_CONFIG.SCRIPT_URL || null;
+        DASH_PASSWORD = window.OREUM_CONFIG.DASH_PASSWORD || null;
+      }
+      resolve();
+    };
+    s.onerror = ()=>resolve();
+    document.head.appendChild(s);
+  });
+}
+
+let ALL_DATA = [];
+
+function checkPassword(){
+  const pw = document.getElementById('pwInput').value;
+  const msg = document.getElementById('gateMsg');
+  msg.innerHTML = '';
+  if(!DASH_PASSWORD){
+    msg.innerHTML = '<div class="error">config.js에 DASH_PASSWORD가 설정되지 않았습니다.</div>';
+    return;
+  }
+  if(pw === DASH_PASSWORD){
+    document.getElementById('gate').classList.add('hide');
+    document.getElementById('main').classList.remove('hide');
+    sessionStorage.setItem('oreum_dash_auth', '1');
+    loadData();
+  } else {
+    msg.innerHTML = '<div class="error">비밀번호가 일치하지 않습니다.</div>';
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('oreum_dash_auth');
+  document.getElementById('main').classList.add('hide');
+  document.getElementById('gate').classList.remove('hide');
+  document.getElementById('pwInput').value = '';
+}
+
+// ───── 회차 셀렉터 동적 생성 — 학년 필터에 따라 옵션 갱신 ─────
+function rebuildExamSelect(){
+  const gradeFilter = document.getElementById('gradeSelect').value;
+  const examSelect = document.getElementById('examSelect');
+  const currentValue = examSelect.value;
+
+  const filtered = gradeFilter === 'all'
+    ? EXAM_LIST
+    : EXAM_LIST.filter(e => e.gradeLabel === gradeFilter);
+
+  let opts = '<option value="all">전체 회차</option>';
+  filtered.forEach(e=>{
+    opts += `<option value="${e.id}">${e.no} · ${e.label}</option>`;
+  });
+  examSelect.innerHTML = opts;
+
+  // 학년 바뀌어도 현재 선택값이 유효하면 유지
+  if([...examSelect.options].some(o=>o.value===currentValue)){
+    examSelect.value = currentValue;
+  }
+}
+
+function loadData(){
+  const msg = document.getElementById('loadMsg');
+  const tableBox = document.getElementById('tableBox');
+  msg.innerHTML = '';
+
+  if(!SCRIPT_URL || SCRIPT_URL.includes('PASTE_YOUR_APPS_SCRIPT_URL')){
+    msg.innerHTML = '<div class="error">config.js의 SCRIPT_URL이 설정되지 않았습니다.</div>';
+    tableBox.innerHTML = '<div class="empty">설정 필요</div>';
+    return;
+  }
+
+  tableBox.innerHTML = '<div class="empty">불러오는 중...</div>';
+  fetch(SCRIPT_URL + '?action=list')
+    .then(r=>r.json())
+    .then(d=>{
+      ALL_DATA = Array.isArray(d) ? d : (d.data || []);
+      renderStatsAndTable();
+    })
+    .catch(err=>{
+      msg.innerHTML = '<div class="error">데이터를 불러오지 못했습니다: '+err.message+'</div>';
+      tableBox.innerHTML = '<div class="empty">로드 실패</div>';
+    });
+}
+
+function renderStatsAndTable(){
+  const gradeFilter = document.getElementById('gradeSelect').value;
+  const examFilter = document.getElementById('examSelect').value;
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  let rows = ALL_DATA.slice();
+
+  if(gradeFilter !== 'all'){
+    rows = rows.filter(r => (r.grade||r['학년']||'').toString() === gradeFilter);
+  }
+  if(examFilter !== 'all'){
+    rows = rows.filter(r => (r.exam||r['회차ID']||r['시험']||'').toString() === examFilter);
+  }
+  if(search){
+    rows = rows.filter(r => {
+      const name = (r.name||r['이름']||'').toString().toLowerCase();
+      const school = (r.school||r['학교']||'').toString().toLowerCase();
+      return name.includes(search) || school.includes(search);
+    });
+  }
+
+  // ───── 통계 ─────
+  const statsBox = document.getElementById('statsBox');
+  const go1Count = rows.filter(r=>(r.grade||r['학년'])==='고1').length;
+  const go2Count = rows.filter(r=>(r.grade||r['학년'])==='고2').length;
+  const avgRaw = avg(rows,'raw','원점수');
+  const avgGrade = avgGradeNum(rows);
+  statsBox.innerHTML = `
+    <div class="section"><div class="section-title">요약</div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">총 응답</div><div class="stat-num">${rows.length}</div></div>
+      <div class="stat-card"><div class="stat-label">평균 원점수</div><div class="stat-num">${avgRaw.toFixed(1)}</div></div>
+      <div class="stat-card"><div class="stat-label">평균 예상 등급</div><div class="stat-num">${avgGrade>0?avgGrade.toFixed(1):'-'}</div></div>
+      <div class="stat-card"><div class="stat-label">고 1</div><div class="stat-num">${go1Count}</div></div>
+      <div class="stat-card"><div class="stat-label">고 2</div><div class="stat-num">${go2Count}</div></div>
+    </div></div>
+  `;
+
+  // ───── 테이블 ─────
+  const tableBox = document.getElementById('tableBox');
+  if(rows.length === 0){
+    tableBox.innerHTML = '<div class="empty">조건에 해당하는 응답이 없습니다.</div>';
+    return;
+  }
+
+  // 최신순 정렬
+  rows.sort((a,b)=>{
+    const ta = (a.timestamp||a['제출시각']||a['시간']||a['타임스탬프']||'').toString();
+    const tb = (b.timestamp||b['제출시각']||b['시간']||b['타임스탬프']||'').toString();
+    return tb.localeCompare(ta);
+  });
+
+  let html = '<div style="overflow-x:auto"><table><thead><tr>';
+  html += '<th>시각</th><th>이름</th><th>학교</th><th>학년</th><th>회차</th><th>원점수</th><th>등급</th><th>핵심 패턴</th>';
+  html += '</tr></thead><tbody>';
+  rows.forEach(r=>{
+    const ts = (r.timestamp||r['제출시각']||r['시간']||r['타임스탬프']||'').toString().substring(0,16).replace('T',' ');
+    const name = r.name||r['이름']||'';
+    const school = r.school||r['학교']||'';
+    const studentGrade = r.grade||r['학년']||'';
+    const exam = r.exam||r['회차ID']||r['시험']||'';
+    const raw = r.raw||r['원점수']||'';
+    const predGrade = r['예상등급']||r.predGrade||'';
+    const patterns = (r['핵심패턴']||r.patterns||'').toString().split('|').map(p=>p.split(':')[0]).filter(Boolean).join(', ');
+    html += `<tr>
+      <td style="color:var(--text-muted);font-size:0.78rem">${escape(ts)}</td>
+      <td style="color:var(--cream);font-weight:500">${escape(name)}</td>
+      <td>${escape(school)}</td>
+      <td><span class="tag tag-student-grade">${escape(studentGrade)}</span></td>
+      <td><span class="tag tag-exam">${escape(examShort(exam))}</span></td>
+      <td style="color:var(--gold);font-weight:500">${escape(raw)}</td>
+      <td>${predGrade?'<span class="tag tag-grade">'+escape(predGrade)+'</span>':'-'}</td>
+      <td style="font-size:0.8rem">${escape(patterns)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  tableBox.innerHTML = html;
+}
+
+function avg(rows, key1, key2){
+  const nums = rows.map(r=>parseFloat(r[key1]||r[key2]||0)).filter(n=>!isNaN(n)&&n>0);
+  if(nums.length===0) return 0;
+  return nums.reduce((a,b)=>a+b,0)/nums.length;
+}
+
+// 예상 등급 평균 — '1', '2' 같은 숫자 또는 '1등급' 형식 모두 처리
+function avgGradeNum(rows){
+  const nums = rows.map(r=>{
+    const g = (r['예상등급']||r.predGrade||'').toString();
+    const m = g.match(/(\d+)/);
+    return m ? parseInt(m[1],10) : NaN;
+  }).filter(n=>!isNaN(n)&&n>=1&&n<=9);
+  if(nums.length===0) return 0;
+  return nums.reduce((a,b)=>a+b,0)/nums.length;
+}
+
+function examShort(examId){
+  if(!examId) return '-';
+  const m = EXAM_LIST.find(e=>e.id===examId);
+  return m ? m.no.replace(/\s/g,'') : examId;
+}
+
+function escape(s){ return String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+// ───── 입력 시 실시간 필터 ─────
+document.addEventListener('input', e=>{
+  if(e.target.id==='searchInput'){
+    if(ALL_DATA.length>0) renderStatsAndTable();
+  }
+});
+
+document.addEventListener('change', e=>{
+  if(e.target.id==='gradeSelect'){
+    rebuildExamSelect();
+    if(ALL_DATA.length>0) renderStatsAndTable();
+  } else if(e.target.id==='examSelect'){
+    if(ALL_DATA.length>0) renderStatsAndTable();
+  }
+});
+
+// ───── 초기화 ─────
+loadConfig().then(()=>{
+  rebuildExamSelect();
+  if(sessionStorage.getItem('oreum_dash_auth')==='1' && DASH_PASSWORD){
+    document.getElementById('gate').classList.add('hide');
+    document.getElementById('main').classList.remove('hide');
+    loadData();
+  }
+});
+</script>
+</body>
+</html>
