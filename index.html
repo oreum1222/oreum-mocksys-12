@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>오름 국어 · 고1·고2 모의고사 진단 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-deep:#4a5a3a;
+  --green-darker:#3a4830;
+  --gold:#c9a84c;
+  --gold-soft:#d4b966;
+  --cream:#f4ede0;
+  --bg-dark:#1a1f15;
+  --bg-card:#252b1f;
+  --bg-card-hover:#2d3326;
+  --text-primary:#f4ede0;
+  --text-secondary:#b8b09e;
+  --text-muted:#7a7466;
+  --border-soft:rgba(201,168,76,0.18);
+  --border-line:rgba(244,237,224,0.08);
+  --danger:#c66;
+  --warn:#d4b966;
+  --ok:#7d9863;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg-dark);
+  color:var(--text-primary);
+  min-height:100vh;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:920px;margin:0 auto;padding:60px 24px 80px}
+
+/* ─── Loading ─── */
+.loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg-dark);z-index:1000}
+.loading-mark{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:1.5rem;letter-spacing:3px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}
+.error-box{padding:28px;background:rgba(198,102,102,0.1);border:1px solid var(--danger);border-radius:6px;color:var(--danger);text-align:center;margin:60px 0}
+
+/* ─── Header ─── */
+.header{text-align:center;margin-bottom:64px;padding-bottom:48px;border-bottom:1px solid var(--border-line)}
+.brand-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:20px}
+.brand-mark{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-soft) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif KR',serif;font-weight:900;font-size:18px;color:var(--bg-dark);
+  letter-spacing:-1px;
+}
+.brand-name{font-family:'Noto Serif KR',serif;font-weight:700;font-size:1.05rem;color:var(--gold);letter-spacing:1px}
+.title{
+  font-family:'Noto Serif KR',serif;font-weight:700;
+  font-size:2.1rem;letter-spacing:-0.5px;
+  margin-bottom:18px;color:var(--cream);
+}
+.title-accent{color:var(--gold)}
+.lead{
+  color:var(--text-secondary);font-size:1.02rem;
+  max-width:560px;margin:0 auto;line-height:1.85;
+}
+
+/* ─── Section label ─── */
+.section-label{
+  display:flex;align-items:center;gap:14px;
+  margin:0 0 28px;
+  font-family:'Noto Serif KR',serif;font-weight:500;
+  color:var(--gold);font-size:0.92rem;letter-spacing:2px;
+}
+.section-label::before,.section-label::after{content:'';height:1px;background:var(--border-soft);flex:1}
+.section-label::before{flex:0 0 32px}
+
+/* ─── Exam cards (회차 선택) ─── */
+.exam-list{display:grid;gap:20px;grid-template-columns:1fr}
+.exam-card{
+  display:block;background:var(--bg-card);
+  border:1px solid var(--border-line);border-radius:6px;
+  padding:32px 36px;text-decoration:none;color:inherit;
+  transition:border-color 0.2s,background 0.2s,transform 0.2s;
+  position:relative;overflow:hidden;cursor:pointer;width:100%;text-align:left;font-family:inherit;
+}
+.exam-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:0.6;transition:opacity 0.2s,width 0.2s}
+.exam-card:hover{background:var(--bg-card-hover);border-color:var(--border-soft);transform:translateY(-2px)}
+.exam-card:hover::before{opacity:1;width:4px}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:14px;flex-wrap:wrap}
+.card-meta-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.card-num{font-family:'Noto Serif KR',serif;font-weight:700;color:var(--gold);font-size:0.78rem;letter-spacing:3px}
+.card-grade{font-size:0.72rem;color:var(--text-muted);padding:3px 10px;border:1px solid var(--border-soft);border-radius:11px;letter-spacing:1px}
+.card-status{font-size:0.72rem;letter-spacing:0.5px;padding:3px 10px;border-radius:11px}
+.status-active{background:rgba(74,90,58,0.5);color:var(--cream);border:1px solid var(--green-deep)}
+.status-tentative{background:rgba(201,168,76,0.12);color:var(--gold-soft);border:1px solid rgba(201,168,76,0.3)}
+.card-arrow{font-family:'Noto Serif KR',serif;font-size:1.4rem;color:var(--text-muted);transition:color 0.2s,transform 0.2s;line-height:1;align-self:center}
+.exam-card:hover .card-arrow{color:var(--gold);transform:translateX(4px)}
+.card-name{font-family:'Noto Serif KR',serif;font-weight:500;font-size:1.32rem;color:var(--cream);margin-bottom:8px;letter-spacing:-0.3px}
+.card-date{color:var(--text-muted);font-size:0.85rem;margin-bottom:22px;font-weight:300}
+.card-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding-top:22px;border-top:1px solid var(--border-line)}
+.card-body-block{display:flex;flex-direction:column;gap:8px}
+.body-label{font-size:0.72rem;color:var(--text-muted);letter-spacing:1.5px;font-weight:500}
+.body-value{font-size:0.88rem;color:var(--text-secondary);line-height:1.65}
+.body-value strong{color:var(--cream);font-weight:500}
+.cut-row{display:flex;gap:10px;flex-wrap:wrap;font-size:0.86rem;align-items:baseline}
+.cut-pill{display:inline-flex;align-items:baseline;gap:5px;color:var(--text-secondary)}
+.cut-pill .cut-num{color:var(--cream);font-weight:700;font-family:'Noto Sans KR',sans-serif;font-size:0.95rem}
+.cut-divider{color:var(--text-muted)}
+.cut-tentative-mark{font-size:0.7rem;color:var(--gold-soft);margin-left:6px;letter-spacing:0.5px}
+
+/* ─── Footer ─── */
+.footer{margin-top:72px;padding-top:32px;border-top:1px solid var(--border-line);text-align:center;color:var(--text-muted);font-size:0.82rem;line-height:1.9}
+.footer-mark{font-family:'Noto Serif KR',serif;color:var(--gold);font-weight:500;letter-spacing:2px;font-size:0.78rem;margin-bottom:8px;display:block}
+
+/* ─── Diagnostic flow common ─── */
+.back-bar{margin-bottom:32px}
+.back-link{display:inline-flex;align-items:center;gap:8px;color:var(--text-muted);text-decoration:none;font-size:0.88rem;background:none;border:none;cursor:pointer;font-family:inherit;padding:8px 0;transition:color 0.2s}
+.back-link:hover{color:var(--gold)}
+.diag-header{margin-bottom:48px;padding-bottom:32px;border-bottom:1px solid var(--border-line)}
+.exam-tag{display:inline-block;font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.78rem;letter-spacing:3px;margin-bottom:14px}
+.diag-title{font-family:'Noto Serif KR',serif;font-weight:700;font-size:1.85rem;color:var(--cream);margin-bottom:14px;letter-spacing:-0.5px;line-height:1.3}
+.diag-sub{color:var(--text-secondary);font-size:0.95rem;line-height:1.85}
+
+/* ─── Step indicator ─── */
+.step-bar{display:flex;gap:12px;margin-bottom:48px;flex-wrap:wrap}
+.step{flex:1;min-width:120px;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border-line);border-radius:5px;font-size:0.82rem;color:var(--text-muted);position:relative}
+.step.active{background:var(--bg-card-hover);border-color:var(--gold);color:var(--cream)}
+.step.done{background:rgba(74,90,58,0.3);border-color:var(--green-deep);color:var(--text-secondary)}
+.step-num{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.7rem;letter-spacing:2px;display:block;margin-bottom:4px;font-weight:500}
+.step-label{font-size:0.88rem;font-weight:400}
+.step.active .step-label{font-weight:500}
+
+/* ─── Form ─── */
+.section{background:var(--bg-card);border:1px solid var(--border-line);border-radius:6px;padding:36px;margin-bottom:24px}
+.section-title{font-family:'Noto Serif KR',serif;font-weight:500;font-size:1.15rem;color:var(--cream);margin-bottom:8px;letter-spacing:-0.3px}
+.section-desc{color:var(--text-secondary);font-size:0.9rem;line-height:1.75;margin-bottom:28px}
+.form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.form-row label{font-size:0.86rem;color:var(--text-secondary);font-weight:400}
+.form-row label .req{color:var(--gold);margin-left:3px}
+.form-row input[type="text"],.form-row input[type="number"],.form-row select{
+  background:var(--bg-dark);border:1px solid var(--border-line);border-radius:4px;
+  padding:12px 16px;color:var(--cream);font-family:inherit;font-size:0.95rem;
+  transition:border-color 0.15s;
+}
+.form-row input:focus,.form-row select:focus{outline:none;border-color:var(--gold)}
+.form-row .hint{font-size:0.78rem;color:var(--text-muted);margin-top:4px}
+.radio-group{display:flex;gap:12px;flex-wrap:wrap}
+.radio-pill{flex:1;min-width:140px;padding:13px 16px;background:var(--bg-dark);border:1px solid var(--border-line);border-radius:4px;cursor:pointer;text-align:center;transition:all 0.15s;color:var(--text-secondary);font-size:0.92rem}
+.radio-pill input{display:none}
+.radio-pill:hover{border-color:var(--border-soft);color:var(--cream)}
+.radio-pill.selected{border-color:var(--gold);background:rgba(201,168,76,0.08);color:var(--cream)}
+
+/* ─── Answer marking ─── */
+.area-block{margin-bottom:32px}
+.area-title{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.9rem;letter-spacing:2px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border-soft)}
+.area-title .sub{color:var(--text-muted);font-size:0.78rem;margin-left:10px;letter-spacing:0;font-weight:300}
+.q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.q-item{display:flex;align-items:center;gap:10px;background:var(--bg-dark);border:1px solid var(--border-line);border-radius:4px;padding:10px 12px;cursor:pointer;transition:all 0.15s;user-select:none}
+.q-item:hover{border-color:var(--border-soft)}
+.q-item.wrong{background:rgba(198,102,102,0.12);border-color:var(--danger);color:var(--cream)}
+.q-num{font-weight:500;font-size:0.92rem;min-width:34px;color:var(--cream)}
+.q-three{font-size:0.7rem;color:var(--gold-soft);font-weight:500;margin-left:auto}
+.q-wr{font-size:0.7rem;color:var(--text-muted);margin-left:auto}
+.q-item.wrong .q-wr{color:var(--cream);opacity:0.7}
+
+/* ─── Time survey ─── */
+.time-survey{display:flex;flex-direction:column;gap:32px}
+.tq{padding-bottom:24px;border-bottom:1px solid var(--border-line)}
+.tq:last-child{border-bottom:none;padding-bottom:0}
+.tq-num{display:inline-block;font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.78rem;letter-spacing:2px;margin-bottom:8px}
+.tq-q{font-size:0.96rem;color:var(--cream);margin-bottom:16px;line-height:1.65;font-weight:400}
+.tq-opts{display:flex;flex-direction:column;gap:8px}
+.tq-opt{padding:12px 16px;background:var(--bg-dark);border:1px solid var(--border-line);border-radius:4px;cursor:pointer;color:var(--text-secondary);font-size:0.9rem;transition:all 0.15s}
+.tq-opt input{display:none}
+.tq-opt:hover{border-color:var(--border-soft);color:var(--cream)}
+.tq-opt.selected{border-color:var(--gold);background:rgba(201,168,76,0.08);color:var(--cream)}
+
+/* ─── Buttons ─── */
+.btn-row{display:flex;gap:12px;justify-content:space-between;margin-top:36px;flex-wrap:wrap}
+.btn{padding:14px 32px;border:1px solid var(--border-soft);background:transparent;color:var(--text-primary);border-radius:4px;font-family:inherit;font-size:0.95rem;cursor:pointer;transition:all 0.15s;font-weight:400;letter-spacing:0.5px}
+.btn-primary{background:var(--gold);color:var(--bg-dark);border-color:var(--gold);font-weight:500}
+.btn-primary:hover{background:var(--gold-soft);border-color:var(--gold-soft)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ─── Result ─── */
+.result-hero{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:6px;padding:36px;margin-bottom:24px;text-align:center}
+.result-name{font-family:'Noto Serif KR',serif;font-size:1.65rem;color:var(--cream);font-weight:500;margin-bottom:8px}
+.result-meta{color:var(--text-muted);font-size:0.85rem;letter-spacing:0.5px}
+.score-block{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:32px 0}
+.score-card{background:var(--bg-dark);border:1px solid var(--border-line);border-radius:5px;padding:24px;text-align:center}
+.score-label{font-size:0.78rem;color:var(--text-muted);letter-spacing:2px;margin-bottom:10px}
+.score-num{font-family:'Noto Serif KR',serif;color:var(--gold);font-weight:700;font-size:2.5rem;line-height:1;margin-bottom:8px}
+.score-num-sub{color:var(--text-secondary);font-size:0.85rem}
+.grade-badge{display:inline-block;background:linear-gradient(135deg,var(--gold) 0%,var(--gold-soft) 100%);color:var(--bg-dark);padding:6px 18px;border-radius:14px;font-weight:700;font-size:1.05rem;font-family:'Noto Serif KR',serif;letter-spacing:1px}
+.diag-section{background:var(--bg-card);border:1px solid var(--border-line);border-radius:6px;padding:32px;margin-bottom:20px}
+.diag-section-title{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.9rem;letter-spacing:2.5px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border-soft)}
+.pattern{padding:18px 0;border-bottom:1px solid var(--border-line)}
+.pattern:last-child{border-bottom:none}
+.pattern-name{font-family:'Noto Serif KR',serif;color:var(--cream);font-size:1.05rem;font-weight:500;margin-bottom:10px}
+.pattern-name .code{color:var(--gold);font-size:0.78rem;margin-right:10px;letter-spacing:1.5px}
+.pattern-name .hits{color:var(--text-muted);font-size:0.78rem;margin-left:10px;font-weight:400;letter-spacing:0}
+.pattern-diag{color:var(--text-secondary);font-size:0.9rem;line-height:1.78;margin-bottom:10px}
+.pattern-action{color:var(--cream);font-size:0.88rem;line-height:1.78;padding:14px 18px;background:rgba(201,168,76,0.05);border-left:2px solid var(--gold);border-radius:0 4px 4px 0}
+.pattern-action::before{content:'처방';font-family:'Noto Serif KR',serif;font-size:0.68rem;color:var(--gold);letter-spacing:2px;display:block;margin-bottom:6px;font-weight:500}
+.q-detail{padding:16px 0;border-bottom:1px solid var(--border-line)}
+.q-detail:last-child{border-bottom:none}
+.q-detail-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.q-detail-num{font-family:'Noto Serif KR',serif;color:var(--gold);font-weight:500;font-size:1.1rem}
+.q-detail-area{color:var(--text-muted);font-size:0.78rem;letter-spacing:1.5px}
+.q-detail-source{color:var(--text-secondary);font-size:0.85rem;font-weight:400}
+.q-detail-three{font-size:0.7rem;color:var(--gold-soft);padding:2px 8px;border:1px solid var(--gold-soft);border-radius:8px}
+.q-detail-wr{font-size:0.78rem;color:var(--text-muted);margin-left:auto}
+.q-detail-core{color:var(--cream);font-size:0.92rem;font-weight:500;margin-bottom:8px;line-height:1.65}
+.q-detail-weak{color:var(--text-secondary);font-size:0.86rem;line-height:1.78;margin-bottom:8px}
+.q-detail-rem{color:var(--text-secondary);font-size:0.86rem;line-height:1.78;padding:10px 14px;background:rgba(244,237,224,0.03);border-radius:3px;border-left:2px solid var(--green-deep)}
+.q-detail-rem::before{content:'보완 방향';display:block;font-family:'Noto Serif KR',serif;font-size:0.68rem;color:var(--ok);letter-spacing:2px;margin-bottom:5px;font-weight:500}
+.parent-note{margin-top:14px;padding:14px 16px;background:rgba(201,168,76,0.06);border:1px solid var(--border-soft);border-radius:4px;color:var(--cream);font-size:0.86rem;line-height:1.78}
+.parent-note::before{content:'학부모 코멘트';display:block;font-family:'Noto Serif KR',serif;font-size:0.68rem;color:var(--gold);letter-spacing:2px;margin-bottom:6px;font-weight:500}
+.empty-msg{text-align:center;color:var(--text-muted);padding:32px 0;font-size:0.9rem;font-style:italic}
+
+/* ─── Submit feedback ─── */
+.submit-msg{text-align:center;padding:24px;border-radius:5px;margin-top:24px;font-size:0.92rem}
+.submit-ok{background:rgba(125,152,99,0.1);border:1px solid var(--ok);color:var(--cream)}
+.submit-err{background:rgba(198,102,102,0.1);border:1px solid var(--danger);color:var(--cream)}
+
+/* ─── Mobile ─── */
+@media (max-width:640px){
+  .wrap{padding:40px 16px 60px}
+  .title{font-size:1.55rem}
+  .lead{font-size:0.94rem}
+  .exam-card{padding:24px 22px}
+  .card-name{font-size:1.15rem}
+  .card-body{grid-template-columns:1fr;gap:18px}
+  .card-arrow{display:none}
+  .header{margin-bottom:48px;padding-bottom:36px}
+  .diag-title{font-size:1.45rem}
+  .section{padding:24px 22px}
+  .step-bar{gap:6px}
+  .step{padding:10px 12px;font-size:0.78rem;min-width:80px}
+  .step-label{font-size:0.78rem}
+  .q-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+  .q-item{padding:8px 10px;font-size:0.85rem}
+  .btn-row{flex-direction:column-reverse}
+  .btn{width:100%}
+  .score-block{grid-template-columns:1fr 1fr}
+  .score-num{font-size:2rem}
+}
+@media print{
+  body{background:#fff;color:#000}
+  .header,.back-bar,.diag-header,.btn-row,#submitFeedback,.loading,.exam-list,.section-label,.footer{display:none !important}
+  .result-hero,.score-block,.diag-section{break-inside:avoid;page-break-inside:avoid}
+  .pattern,.q-detail{break-inside:avoid;page-break-inside:avoid}
+  .score-card{border:1px solid #888 !important;background:#fff !important}
+  .pattern,.q-detail{background:#f8f8f8 !important;color:#000 !important}
+  .pattern-action,.parent-note,.q-detail-rem{background:#fff !important;border:1px solid #888 !important}
+  *{box-shadow:none !important;text-shadow:none !important}
+}
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">
+  <div class="loading-mark">오 름</div>
+</div>
+
+<div id="root" class="wrap" style="display:none"></div>
+
+<script>
+// ─────────────────── State ───────────────────
+const STATE = {
+  view: 'router',         // 'router' | 'diag'
+  examId: null,           // 선택된 회차 id
+  data: null,             // 현재 회차 JSON
+  step: 1,                // 1=정보, 2=마킹, 3=시간, 4=결과
+  student: { name:'', school:'', grade:'고1', raw:null },
+  wrong: new Set(),       // 'common-1', 'common-23' 등
+  timeAns: {},            // { '1': 0, '2': 1, ... }
+  result: null            // 4단계에서 산출된 결과 객체
+};
+
+// 회차 목록 — 새 회차가 추가될 때마다 맨 위에 객체 추가
+const EXAM_LIST = [
+  // 예시:
+  // {
+  //   id: '2026-03-go1', file: 'data/mock-2026-03-go1.json',
+  //   no: '제 1 회', tagDate: '2026년 3월 학력평가',
+  //   status: 'active', statusLabel: '정식 운영'
+  // },
+];
+
+const root = document.getElementById('root');
+
+// ─────────────────── Utils ───────────────────
+function el(tag, attrs={}, ...children){
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') e.className=v;
+    else if(k==='onclick' || k==='oninput' || k==='onchange') e[k]=v;
+    else if(k==='html') e.innerHTML=v;
+    else e.setAttribute(k,v);
+  });
+  children.flat().forEach(c=>{
+    if(c==null) return;
+    if(typeof c==='string'||typeof c==='number') e.appendChild(document.createTextNode(c));
+    else e.appendChild(c);
+  });
+  return e;
+}
+function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+function escape(s){ return String(s||'').replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+// ─────────────────── Config loader ───────────────────
+let SCRIPT_URL = null, DASH_PASSWORD = null;
+function loadConfig(){
+  return new Promise((resolve)=>{
+    const s = document.createElement('script');
+    s.src = 'config.js?v=' + Date.now();
+    s.onload = ()=>{
+      if(window.OREUM_CONFIG){
+        SCRIPT_URL = window.OREUM_CONFIG.SCRIPT_URL || null;
+        DASH_PASSWORD = window.OREUM_CONFIG.DASH_PASSWORD || null;
+      }
+      resolve();
+    };
+    s.onerror = ()=>resolve();
+    document.head.appendChild(s);
+  });
+}
+
+// ─────────────────── Router ───────────────────
+function renderRouter(){
+  STATE.view = 'router';
+  STATE.examId = null; STATE.data = null;
+  clear(root);
+
+  const wrapHeader = el('header', {class:'header'},
+    el('div',{class:'brand-row'},
+      el('div',{class:'brand-mark'},'오'),
+      el('div',{class:'brand-name'},'오름 국어 연구소')
+    ),
+    el('h1',{class:'title',html:'고1·고2 모의고사 <span class="title-accent">진단 시스템</span>'}),
+    el('p',{class:'lead',html:'오답 마킹부터 시간 진단까지 4단계로 자기 약점을 정확히 짚어내는 도구입니다.<br>응시한 회차를 선택해 주세요.'})
+  );
+
+  const sectionLabel = el('div',{class:'section-label'},'회차 목록');
+  const list = el('div',{class:'exam-list'});
+
+  if(EXAM_LIST.length === 0){
+    list.appendChild(el('div',{class:'error-box',html:'아직 운영 중인 회차가 없습니다.<br>회차가 등록되면 이곳에 카드로 표시됩니다.'}));
+  } else {
+    EXAM_LIST.forEach(meta=>{
+      const card = el('button',{class:'exam-card', onclick:()=>loadExam(meta.id)});
+      card.appendChild(buildCardContent(meta));
+      list.appendChild(card);
+    });
+  }
+
+  const footer = el('footer',{class:'footer',
+    html:'<span class="footer-mark">가경T · 오름 국어 연구소</span>오름 국어학원 · 학원등록번호 제2474호<br>문의 사항은 가경T에게 직접 전달해 주시기 바랍니다.'
+  });
+
+  root.appendChild(wrapHeader);
+  root.appendChild(sectionLabel);
+  root.appendChild(list);
+  root.appendChild(footer);
+
+  // 카드별 메타 비동기 로드
+  if(EXAM_LIST.length > 0){
+    EXAM_LIST.forEach((meta, idx)=>{
+      fetch(meta.file).then(r=>r.json()).then(d=>{
+        const cardEl = list.children[idx];
+        clear(cardEl);
+        cardEl.appendChild(buildCardContent(meta, d));
+      }).catch(err=>{
+        console.error(`[${meta.id}] load failed:`, err);
+      });
+    });
+  }
+
+  window.scrollTo(0,0);
+}
+
+function buildCardContent(meta, data=null){
+  const tentative = meta.status === 'tentative';
+  const examLabel = data ? data.examMeta.label : '...';
+
+  // 핵심 변별 자리 — discriminationFlags에서 상위 3개
+  let discText = '...';
+  if(data && data.discriminationFlags && data.discriminationFlags.length){
+    const flags = data.discriminationFlags.slice(0,3);
+    discText = flags.map(f=>{
+      const keyDisplay = f.key + '번';
+      const note = (f.note||'').split(' — ')[0];
+      return `<strong>${escape(keyDisplay)}</strong> ${escape(note)}`;
+    }).join(' · ');
+  }
+
+  // 등급컷 — 단일 배열
+  let cutHtml = '...';
+  if(data && data.gradeCuts){
+    const cuts = data.gradeCuts || [];
+    const cut1 = cuts[0], cut2 = cuts[1], cut3 = cuts[2];
+    const tentMark = tentative ? '<span class="cut-tentative-mark">잠정</span>' : '';
+    cutHtml = `
+      <div class="cut-row"><span class="cut-pill">국어 <span class="cut-num">${cut1?.raw||'-'}</span></span><span class="cut-divider">/</span><span class="cut-pill"><span class="cut-num">${cut2?.raw||'-'}</span></span><span class="cut-divider">/</span><span class="cut-pill"><span class="cut-num">${cut3?.raw||'-'}</span></span>${tentMark}</div>
+    `;
+  }
+
+  const gradeLabel = (data && data.examMeta && data.examMeta.gradeLabel) ? data.examMeta.gradeLabel : '고1·고2';
+
+  const frag = document.createDocumentFragment();
+  const inner = document.createElement('div');
+  inner.innerHTML = `
+    <div class="card-top">
+      <div class="card-meta-left">
+        <span class="card-num">${escape(meta.no)}</span>
+        <span class="card-grade">${escape(gradeLabel)}</span>
+        <span class="card-status ${meta.status==='active'?'status-active':'status-tentative'}">${escape(meta.statusLabel)}</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </div>
+    <h2 class="card-name">${escape(examLabel)}</h2>
+    <p class="card-date">${meta.tagDate ? '시행일 · '+escape(meta.tagDate) : ''}</p>
+    <div class="card-body">
+      <div class="card-body-block">
+        <span class="body-label">등급컷 · 1 / 2 / 3</span>
+        ${cutHtml}
+      </div>
+      <div class="card-body-block">
+        <span class="body-label">핵심 변별 자리</span>
+        <p class="body-value">${discText}</p>
+      </div>
+    </div>
+  `;
+  while(inner.firstChild) frag.appendChild(inner.firstChild);
+  return frag;
+}
+
+// ─────────────────── Load exam ───────────────────
+function loadExam(examId){
+  const meta = EXAM_LIST.find(e=>e.id===examId);
+  if(!meta) return;
+  document.getElementById('loading').style.display = 'flex';
+  fetch(meta.file).then(r=>r.json()).then(d=>{
+    STATE.examId = examId;
+    STATE.data = d;
+    STATE.view = 'diag';
+    STATE.step = 1;
+    STATE.student = { name:'', school:'', grade:'고1', raw:null };
+    STATE.wrong = new Set();
+    STATE.timeAns = {};
+    STATE.result = null;
+    document.getElementById('loading').style.display = 'none';
+    renderDiag();
+  }).catch(err=>{
+    document.getElementById('loading').style.display = 'none';
+    alert('회차 데이터를 불러오지 못했습니다: '+err.message);
+  });
+}
+
+// ─────────────────── Preview (강사용) ───────────────────
+function generatePreviewWrong(data, pattern){
+  const wrong = new Set();
+  const flags = (data.discriminationFlags || []);
+
+  if(pattern === 'top'){
+    flags.filter(f=>f.level==='1').slice(0,2).forEach(f=>wrong.add('common-'+f.key));
+  } else if(pattern === 'low'){
+    flags.forEach(f=>wrong.add('common-'+f.key));
+    [13,17,19,25,33,38,39,41].forEach(n=>wrong.add('common-'+n));
+  } else {
+    const ones = flags.filter(f=>f.level==='1');
+    const twos = flags.filter(f=>f.level==='2').slice(0,3);
+    [...ones, ...twos].forEach(f=>wrong.add('common-'+f.key));
+  }
+  return wrong;
+}
+
+function generatePreviewTimeAns(pattern){
+  if(pattern === 'low')  return { '1': 4, '2': 0 };
+  if(pattern === 'top')  return { '1': 0, '2': 5 };
+  return { '1': 2, '2': 1 };
+}
+
+function loadExamPreview(examId, pattern){
+  const meta = EXAM_LIST.find(e=>e.id===examId);
+  if(!meta){ renderRouter(); return; }
+  document.getElementById('loading').style.display = 'flex';
+  fetch(meta.file).then(r=>r.json()).then(d=>{
+    STATE.examId = examId;
+    STATE.data = d;
+    STATE.view = 'diag';
+    STATE.step = 4;
+    STATE.student = {
+      name: '[미리보기] '+pattern+' 시나리오',
+      school: '오름',
+      grade: '고1',
+      raw: null
+    };
+    STATE.wrong = generatePreviewWrong(d, pattern);
+    STATE.timeAns = generatePreviewTimeAns(pattern);
+    STATE.result = computeResult();
+    document.getElementById('loading').style.display = 'none';
+    renderDiag();
+  }).catch(err=>{
+    document.getElementById('loading').style.display = 'none';
+    alert('회차 데이터를 불러오지 못했습니다: '+err.message);
+  });
+}
+
+// 강사용 — 시트의 학생 데이터로 진단 화면 재현
+function loadExamReport(examId, info){
+  const meta = EXAM_LIST.find(e=>e.id===examId);
+  if(!meta){ renderRouter(); return; }
+  document.getElementById('loading').style.display = 'flex';
+  fetch(meta.file).then(r=>r.json()).then(d=>{
+    STATE.examId = examId;
+    STATE.data = d;
+    STATE.view = 'diag';
+    STATE.step = 4;
+    STATE.student = {
+      name: info.name || '학생',
+      school: info.school || '-',
+      grade: info.grade || '고1',
+      raw: null
+    };
+    const wrongList = (info.wrong || '').split(',').map(s=>s.trim()).filter(Boolean);
+    STATE.wrong = new Set(wrongList);
+    STATE.timeAns = {};
+    STATE.result = computeResult();
+    if(info.time && d.timeDiagnosticCodes){
+      STATE.result.timeDiag = d.timeDiagnosticCodes[info.time] || null;
+    }
+    document.getElementById('loading').style.display = 'none';
+    renderDiag();
+  }).catch(err=>{
+    document.getElementById('loading').style.display = 'none';
+    alert('회차 데이터를 불러오지 못했습니다: '+err.message);
+  });
+}
+
+// ─────────────────── Diag (4 steps) ───────────────────
+function renderDiag(){
+  clear(root);
+  const back = el('div',{class:'back-bar'},
+    el('button',{class:'back-link',onclick:()=>renderRouter()}, '← 회차 선택으로')
+  );
+  const exam = STATE.data.examMeta;
+  const header = el('div',{class:'diag-header'},
+    el('span',{class:'exam-tag'},'국어 영역 · 진단'),
+    el('h1',{class:'diag-title'},exam.label),
+    el('p',{class:'diag-sub'},'4단계 진단 — 기본 정보 → 오답 마킹 → 시간 진단 → 진단 리포트')
+  );
+  const steps = el('div',{class:'step-bar'},
+    stepEl(1,'기본 정보'),stepEl(2,'오답 마킹'),stepEl(3,'시간 진단'),stepEl(4,'진단 결과')
+  );
+  root.appendChild(back); root.appendChild(header); root.appendChild(steps);
+
+  if(STATE.step===1) renderStep1();
+  else if(STATE.step===2) renderStep2();
+  else if(STATE.step===3) renderStep3();
+  else if(STATE.step===4) renderStep4();
+  window.scrollTo(0,0);
+}
+function stepEl(n,label){
+  const cls = STATE.step===n ? 'step active' : (STATE.step>n ? 'step done' : 'step');
+  return el('div',{class:cls},
+    el('span',{class:'step-num'},'STEP '+n),
+    el('span',{class:'step-label'},label)
+  );
+}
+
+// ─── Step 1: 기본 정보 ───
+function renderStep1(){
+  const form = el('div',{class:'section'},
+    el('h2',{class:'section-title'},'학생 정보'),
+    el('p',{class:'section-desc'},'결과 리포트가 학원 시트에 누적됩니다. 정확히 입력해 주세요.'),
+    formRow('이름','text','name', STATE.student.name),
+    formRow('학교','text','school', STATE.student.school, '예: 산본고'),
+    formRow('학년','select','grade', STATE.student.grade, null, ['고1','고2'])
+  );
+  const btnRow = el('div',{class:'btn-row'},
+    el('span'),
+    el('button',{class:'btn btn-primary', onclick:nextFromStep1},'다음 단계 →')
+  );
+  root.appendChild(form);
+  root.appendChild(btnRow);
+}
+function formRow(label, type, name, value, hint, opts){
+  const row = el('div',{class:'form-row'},
+    el('label',{}, label, el('span',{class:'req'},' *'))
+  );
+  let input;
+  if(type==='select'){
+    input = el('select',{name, oninput:e=>{ STATE.student[name]=e.target.value; }});
+    (opts||['']).forEach(o=>input.appendChild(el('option',{value:o},o)));
+    input.value = value || '';
+  } else {
+    input = el('input',{type, name, value:value||'', oninput:e=>{ STATE.student[name]=e.target.value; }});
+  }
+  row.appendChild(input);
+  if(hint) row.appendChild(el('span',{class:'hint'},hint));
+  return row;
+}
+function nextFromStep1(){
+  const s = STATE.student;
+  if(!s.name?.trim()) return alert('이름을 입력해 주세요.');
+  if(!s.school?.trim()) return alert('학교를 입력해 주세요.');
+  if(!s.grade?.trim()) return alert('학년을 선택해 주세요.');
+  STATE.step = 2; renderDiag();
+}
+
+// ─── Step 2: 오답 마킹 ───
+function renderStep2(){
+  const intro = el('div',{class:'section'},
+    el('h2',{class:'section-title'},'오답 마킹'),
+    el('p',{class:'section-desc', html:'시험에서 틀린 문항을 모두 클릭해 주세요. 다시 클릭하면 해제됩니다. 회색 숫자는 전국 오답률(%)입니다. <strong style="color:var(--gold-soft)">3점</strong> 표시된 문항은 변별이 큰 자리입니다.'})
+  );
+  root.appendChild(intro);
+
+  // 국어 1-45 단일 블록
+  const block = areaBlock('국어 1-45', STATE.data.questions.common, 'common');
+  root.appendChild(block);
+
+  const btnRow = el('div',{class:'btn-row'},
+    el('button',{class:'btn btn-ghost', onclick:()=>{STATE.step=1; renderDiag();}},'← 이전'),
+    el('button',{class:'btn btn-primary', onclick:()=>{STATE.step=3; renderDiag();}},'다음 단계 →')
+  );
+  root.appendChild(btnRow);
+}
+function areaBlock(title, questions, scope){
+  const block = el('div',{class:'section area-block'},
+    el('div',{class:'area-title'}, title, el('span',{class:'sub'},`${questions.length}문항`))
+  );
+  const grid = el('div',{class:'q-grid'});
+  questions.forEach(q=>{
+    const key = scope + '-' + q.no;
+    const isWrong = STATE.wrong.has(key);
+    const item = el('div',{class:isWrong?'q-item wrong':'q-item'},
+      el('span',{class:'q-num'}, q.no+'번'),
+      q.three ? el('span',{class:'q-three'},'3점') : null,
+      q.wr!=null ? el('span',{class:'q-wr'}, q.wr+'%') : null
+    );
+    item.onclick = ()=>{
+      if(STATE.wrong.has(key)) STATE.wrong.delete(key);
+      else STATE.wrong.add(key);
+      item.classList.toggle('wrong');
+    };
+    grid.appendChild(item);
+  });
+  block.appendChild(grid);
+  return block;
+}
+
+// ─── Step 3: 시간 진단 ───
+function renderStep3(){
+  const intro = el('div',{class:'section'},
+    el('h2',{class:'section-title'},'시간 진단'),
+    el('p',{class:'section-desc'},'본 시험에서의 ‘시간 사용 패턴’을 진단합니다. 각 문항에 솔직하게 답해 주세요.')
+  );
+  root.appendChild(intro);
+
+  const surveyBox = el('div',{class:'section'});
+  const surveyList = el('div',{class:'time-survey'});
+  STATE.data.timeSurvey.forEach(tq=>{
+    const tqBlock = el('div',{class:'tq'},
+      el('span',{class:'tq-num'},'Q '+tq.num),
+      el('p',{class:'tq-q'}, tq.q)
+    );
+    const opts = el('div',{class:'tq-opts'});
+    tq.opts.forEach((opt, idx)=>{
+      const selected = STATE.timeAns[String(tq.num)]===idx;
+      const item = el('label',{class:selected?'tq-opt selected':'tq-opt'},
+        el('input',{type:'radio',name:'tq'+tq.num,value:idx}),
+        opt
+      );
+      item.onclick = ()=>{
+        STATE.timeAns[String(tq.num)] = idx;
+        opts.querySelectorAll('.tq-opt').forEach(o=>o.classList.remove('selected'));
+        item.classList.add('selected');
+      };
+      opts.appendChild(item);
+    });
+    tqBlock.appendChild(opts);
+    surveyList.appendChild(tqBlock);
+  });
+  surveyBox.appendChild(surveyList);
+  root.appendChild(surveyBox);
+
+  const btnRow = el('div',{class:'btn-row'},
+    el('button',{class:'btn btn-ghost', onclick:()=>{STATE.step=2; renderDiag();}},'← 이전'),
+    el('button',{class:'btn btn-primary', onclick:goToResult},'진단 결과 보기 →')
+  );
+  root.appendChild(btnRow);
+}
+function goToResult(){
+  STATE.result = computeResult();
+  STATE.step = 4;
+  renderDiag();
+}
+
+// ─────────────────── 진단 계산 엔진 ───────────────────
+function computeResult(){
+  const d = STATE.data;
+
+  let raw = 0;
+  const totalScore = {common:0};
+  const wrongDetails = [];
+
+  d.questions.common.forEach(q=>{
+    const key = 'common-'+q.no;
+    const score = q.three ? 3 : 2;
+    totalScore.common += score;
+    if(!STATE.wrong.has(key)) raw += score;
+    else wrongDetails.push({...q, key, scope:'common', score});
+  });
+
+  // 등급 산출 — 단일 배열
+  const cuts = d.gradeCuts || [];
+  let grade = 9;
+  for(const c of cuts){
+    if(raw >= c.raw){ grade = c.grade; break; }
+  }
+  const gradeCut = cuts.find(c=>c.grade===grade) || cuts[cuts.length-1] || {std:'-', pct:0};
+
+  const patterns = matchPatterns(STATE.wrong, d.patternRules || []);
+  const timeDiag = diagnoseTime(STATE.timeAns, d.timeDiagnosticCodes || {});
+
+  STATE.student.raw = raw;
+  return { raw, grade, gradeCut, totalScore, wrongDetails, patterns, timeDiag };
+}
+
+function matchPatterns(wrongSet, rules){
+  const out = [];
+  for(const rule of rules){
+    const t = rule.trigger;
+    const hits = (t.questions||[]).filter(n=>{
+      const k = 'common-'+n;
+      return wrongSet.has(k);
+    });
+    if(hits.length >= (t.minHits||1)){
+      out.push({
+        code: rule.code,
+        name: rule.name,
+        priority: rule.priority || 5,
+        diag: rule.diag,
+        action: rule.action,
+        evidence: hits,
+        scope: 'common',
+        severe: t.severeAt && hits.length >= t.severeAt
+      });
+    } else if(rule.fallback){
+      const f = rule.fallback;
+      const fHits = (f.questions||[]).filter(n=>{
+        const k = 'common-'+n;
+        return wrongSet.has(k);
+      });
+      if(fHits.length >= (f.minHits||1)){
+        out.push({
+          code: rule.code+'F',
+          name: f.name || rule.name,
+          priority: f.priority || (rule.priority||5)+5,
+          diag: rule.diag,
+          action: rule.action,
+          evidence: fHits,
+          scope: 'common',
+          severe: false
+        });
+      }
+    }
+  }
+  out.sort((a,b)=>(a.priority||5)-(b.priority||5));
+  return out.slice(0, 5);
+}
+
+function diagnoseTime(answers, codes){
+  const a = answers;
+  if(a['1']>=3) return codes.T1;
+  if(a['2']===0) return codes.T2 || codes.T1;
+  if(a['2']===1) return codes.T3 || codes.T1;
+  if(a['2']===4) return codes.T4 || codes.T1;
+  if(a['1']===0 || a['1']===1) return codes.T8 || null;
+  return codes.T5 || null;
+}
+
+// ─── Step 4: 결과지 ───
+function renderStep4(){
+  const r = STATE.result;
+  const exam = STATE.data.examMeta;
+
+  root.appendChild(el('div',{class:'result-hero'},
+    el('h2',{class:'result-name'},STATE.student.name+' 학생'),
+    el('p',{class:'result-meta'}, [
+      STATE.student.school,
+      STATE.student.grade,
+      exam.label
+    ].filter(Boolean).join(' · '))
+  ));
+
+  root.appendChild(el('div',{class:'score-block'},
+    el('div',{class:'score-card'},
+      el('div',{class:'score-label'},'원점수'),
+      el('div',{class:'score-num'},r.raw),
+      el('div',{class:'score-num-sub'},'/ 100점')
+    ),
+    el('div',{class:'score-card'},
+      el('div',{class:'score-label'},'등급'),
+      el('div',{class:'score-num'}, r.grade),
+      el('div',{class:'score-num-sub'},'예상')
+    ),
+    el('div',{class:'score-card'},
+      el('div',{class:'score-label'},'표준점수'),
+      el('div',{class:'score-num'}, r.gradeCut.std || '-'),
+      el('div',{class:'score-num-sub'},'예상')
+    ),
+    el('div',{class:'score-card'},
+      el('div',{class:'score-label'},'백분위'),
+      el('div',{class:'score-num'}, (r.gradeCut.pct||0)+'%'),
+      el('div',{class:'score-num-sub'},'예상')
+    )
+  ));
+
+  const pBlock = el('div',{class:'diag-section'},
+    el('div',{class:'diag-section-title'}, '핵심 약점 패턴')
+  );
+  if(r.patterns.length===0){
+    pBlock.appendChild(el('p',{class:'empty-msg'},'발동된 약점 패턴이 없습니다. 깊이 있게 풀어낸 시험입니다.'));
+  } else {
+    r.patterns.forEach(p=>{
+      const block = el('div',{class:'pattern'},
+        el('div',{class:'pattern-name'},
+          el('span',{class:'code'}, '['+p.code+']'),
+          p.name,
+          el('span',{class:'hits'}, '— '+p.evidence.length+'개 해당')
+        ),
+        el('div',{class:'pattern-diag'}, p.diag||''),
+        p.action ? el('div',{class:'pattern-action'}, p.action) : null
+      );
+      pBlock.appendChild(block);
+    });
+  }
+  root.appendChild(pBlock);
+
+  if(r.timeDiag){
+    root.appendChild(el('div',{class:'diag-section'},
+      el('div',{class:'diag-section-title'},'시간 진단'),
+      el('div',{class:'pattern'},
+        el('div',{class:'pattern-name'}, r.timeDiag.label || '시간 진단'),
+        el('div',{class:'pattern-diag'}, r.timeDiag.feedback || r.timeDiag.desc || '')
+      )
+    ));
+  }
+
+  const wBlock = el('div',{class:'diag-section'},
+    el('div',{class:'diag-section-title'}, `틀린 문항 분석 — ${r.wrongDetails.length}문항`)
+  );
+  if(r.wrongDetails.length===0){
+    wBlock.appendChild(el('p',{class:'empty-msg'},'만점입니다. 다음 회차도 같은 흐름으로 가시면 됩니다.'));
+  } else {
+    r.wrongDetails.forEach(q=>{
+      const head = el('div',{class:'q-detail-head'},
+        el('span',{class:'q-detail-num'}, q.no+'번'),
+        q.area ? el('span',{class:'q-detail-area'}, q.area) : null,
+        q.source ? el('span',{class:'q-detail-source'}, q.source) : null,
+        q.three ? el('span',{class:'q-detail-three'},'3점') : null,
+        q.wr!=null ? el('span',{class:'q-detail-wr'}, '오답률 '+q.wr+'%') : null
+      );
+      const block = el('div',{class:'q-detail'}, head);
+      if(q.coreElement) block.appendChild(el('div',{class:'q-detail-core'}, q.coreElement));
+      if(q.weakness1) block.appendChild(el('div',{class:'q-detail-weak'}, q.weakness1));
+      if(q.weakness2) block.appendChild(el('div',{class:'q-detail-weak'}, q.weakness2));
+      if(q.remediation) block.appendChild(el('div',{class:'q-detail-rem'}, q.remediation));
+      if(q.parentNote) block.appendChild(el('div',{class:'parent-note'}, q.parentNote));
+      wBlock.appendChild(block);
+    });
+  }
+  root.appendChild(wBlock);
+
+  const submitBox = el('div',{class:'btn-row'},
+    el('button',{class:'btn btn-ghost', onclick:()=>{ STATE.step=3; renderDiag(); }},'← 시간 진단으로'),
+    el('button',{class:'btn btn-ghost', onclick:()=>window.print()},'PDF 저장 / 인쇄'),
+    el('button',{class:'btn btn-primary', id:'submitBtn', onclick:submitResult},'결과 시트에 제출 →')
+  );
+  root.appendChild(submitBox);
+  const submitFeedback = el('div',{id:'submitFeedback'});
+  root.appendChild(submitFeedback);
+}
+
+function submitResult(){
+  const btn = document.getElementById('submitBtn');
+  const fb = document.getElementById('submitFeedback');
+  fb.innerHTML = '';
+  if(!SCRIPT_URL || SCRIPT_URL.includes('PASTE_YOUR_APPS_SCRIPT_URL')){
+    fb.appendChild(el('div',{class:'submit-msg submit-err'},
+      'config.js의 SCRIPT_URL이 설정되지 않았습니다. 학원 관리자에게 문의해 주세요.'));
+    return;
+  }
+
+  const r = STATE.result;
+  const s = STATE.student;
+  const exam = STATE.data.examMeta;
+  const data = {
+    timestamp: new Date().toISOString(),
+    exam: exam.id,
+    examLabel: exam.label,
+    name: s.name, school: s.school, grade: s.grade,
+    raw: r.raw,
+    예상등급: r.grade,
+    표준점수: r.gradeCut.std || '',
+    백분위: r.gradeCut.pct || '',
+    틀린문항: Array.from(STATE.wrong).join(','),
+    핵심패턴: r.patterns.map(p=>p.code+':'+p.name).join('|'),
+    시간진단: r.timeDiag ? r.timeDiag.label : '',
+    patternsJson: JSON.stringify(r.patterns.map(p=>({
+      code: p.code, name: p.name,
+      diag: p.diag||'', action: p.action||'',
+      hits: p.evidence||[], scope: p.scope||'common'
+    }))),
+    wrongDetailsJson: JSON.stringify(r.wrongDetails.map(q=>({
+      no: q.no, scope: q.scope,
+      area: q.area||'', source: q.source||'',
+      three: !!q.three, wr: q.wr||null,
+      coreElement: q.coreElement||'',
+      weakness1: q.weakness1||'', weakness2: q.weakness2||'',
+      remediation: q.remediation||'',
+      parentNote: q.parentNote||''
+    }))),
+    timeDiagJson: JSON.stringify(r.timeDiag||null)
+  };
+
+  btn.disabled = true; btn.textContent = '제출 중...';
+  const iframe = document.createElement('iframe');
+  iframe.name = 'submit_target_'+Date.now();
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  const form = document.createElement('form');
+  form.method = 'POST'; form.action = SCRIPT_URL; form.target = iframe.name;
+  Object.entries(data).forEach(([k,v])=>{
+    const inp = document.createElement('input');
+    inp.type='hidden'; inp.name=k; inp.value=String(v);
+    form.appendChild(inp);
+  });
+  document.body.appendChild(form);
+  form.submit();
+
+  setTimeout(()=>{
+    btn.textContent = '제출 완료 ✓'; btn.disabled = true;
+    fb.appendChild(el('div',{class:'submit-msg submit-ok'},
+      '결과가 학원 시트에 저장되었습니다. 가경T가 별도로 확인 후 피드백 드립니다.'));
+    setTimeout(()=>{
+      try { document.body.removeChild(form); document.body.removeChild(iframe); } catch(e){}
+    }, 2000);
+  }, 1200);
+}
+
+// ─────────────────── Init ───────────────────
+loadConfig().then(()=>{
+  document.getElementById('loading').style.display = 'none';
+  root.style.display = '';
+  const params = new URLSearchParams(window.location.search);
+
+  // 강사용 — 학생 결과 재현
+  const reportExamId = params.get('report');
+  if(reportExamId){
+    loadExamReport(reportExamId, {
+      name:   params.get('name'),
+      school: params.get('school'),
+      grade:  params.get('grade'),
+      wrong:  params.get('wrong'),
+      time:   params.get('time')
+    });
+    return;
+  }
+
+  // 강사용 — 미리보기
+  const previewExamId = params.get('preview');
+  if(previewExamId){
+    const pattern = params.get('pattern') || 'mid';
+    loadExamPreview(previewExamId, pattern);
+    return;
+  }
+  renderRouter();
+});
+</script>
+</body>
+</html>
