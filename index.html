@@ -301,6 +301,15 @@ const STATE = {
 
 // 회차 목록 — 새 회차가 추가될 때마다 맨 위에 객체 추가
 const EXAM_LIST = [
+  // 고2 — 2020년 (최신 → 과거)
+  { id:'2020-11-go2', grade:'go2', year:'2020', file:'data/mock-2020-11-go2.json',
+    no:'11월 학력평가', tagDate:'2020년 11월', status:'active', statusLabel:'정식 운영' },
+  { id:'2020-09-go2', grade:'go2', year:'2020', file:'data/mock-2020-09-go2.json',
+    no:'9월 학력평가', tagDate:'2020년 9월', status:'active', statusLabel:'정식 운영' },
+  { id:'2020-06-go2', grade:'go2', year:'2020', file:'data/mock-2020-06-go2.json',
+    no:'6월 학력평가', tagDate:'2020년 6월', status:'active', statusLabel:'정식 운영' },
+  { id:'2020-03-go2', grade:'go2', year:'2020', file:'data/mock-2020-03-go2.json',
+    no:'3월 학력평가', tagDate:'2020년 3월', status:'active', statusLabel:'정식 운영' },
   // 고1 — 2021년 (최신 → 과거)
   { id:'2021-11-go1', grade:'go1', year:'2021', file:'data/mock-2021-11-go1.json',
     no:'11월 학력평가', tagDate:'2021년 11월', status:'active', statusLabel:'정식 운영' },
@@ -1020,7 +1029,7 @@ function renderStep4(){
       if(q.weakness1) block.appendChild(el('div',{class:'q-detail-weak'}, q.weakness1));
       if(q.weakness2) block.appendChild(el('div',{class:'q-detail-weak'}, q.weakness2));
       if(q.remediation) block.appendChild(el('div',{class:'q-detail-rem'}, q.remediation));
-      if(q.parentNote) block.appendChild(el('div',{class:'parent-note'}, q.parentNote));
+      // 학부모 코멘트(parentNote)는 학생 화면에 노출하지 않음 — 시트 제출 데이터(wrongDetailsJson)에만 포함되어 강사가 확인
       wBlock.appendChild(block);
     });
   }
