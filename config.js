@@ -13,6 +13,6 @@
 //   고1·고2 응답이 고3 시트에 섞이지 않도록 분리 운영.
 
 window.OREUM_CONFIG = {
-  SCRIPT_URL: "https://script.google.com/macros/s/AKfycby7ycoIe7Arorw4BVLtDCJmFe9LHEcBJASJzjueBZpVVeKjTJKB21nOaqeX_G5NiRFhsQ/exec",
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxq6rgApcUXquqDZWJIUYsI6trWYe_ez9rKUHIHe4IJOrWAQwkaa6cwuMpMC-F_rZYr1g/exec",
   DASH_PASSWORD: "74527697"
 };
