@@ -14,5 +14,5 @@
 
 window.OREUM_CONFIG = {
   SCRIPT_URL: "https://script.google.com/macros/s/AKfycby7ycoIe7Arorw4BVLtDCJmFe9LHEcBJASJzjueBZpVVeKjTJKB21nOaqeX_G5NiRFhsQ/exec",
-  DASH_PASSWORD: "PASTE_YOUR_DASHBOARD_PASSWORD_HERE"
+  DASH_PASSWORD: "74527697"
 };
