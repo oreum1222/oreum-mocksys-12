@@ -1086,7 +1086,7 @@ function submitResult(){
     }))),
     wrongDetailsJson: JSON.stringify(r.wrongDetails.map(q=>({
       no: q.no, scope: q.scope,
-      area: q.area||'', source: q.source||'',
+      area: q.area||'', source: q.source||'', type: q.type||'',
       three: !!q.three, wr: q.wr||null,
       coreElement: q.coreElement||'',
       weakness1: q.weakness1||'', weakness2: q.weakness2||'',

@@ -494,6 +494,7 @@ function buildReports(){
     students[name].rounds[rid] = {
       rid:rid, label:label, raw:raw, grade:grade,
       areaCount:areaCount, wrongNos:wrongNos, wrongCount:wrongCount,
+      detail:detail,
       time:time, patLabel:patLabel
     };
     if(yr) students[name].yr = yr;
@@ -530,11 +531,33 @@ function buildReports(){
     var weakLabels = [];
     seq.forEach(function(d){ if(d.patLabel && weakLabels.indexOf(d.patLabel)<0) weakLabels.push(d.patLabel); });
 
+    // ── 사고 동작(관통 패턴) 집계: 학생이 틀린 문항의 coreElement·type·area로 분류 ──
+    var pAgg = {};
+    seq.forEach(function(d){
+      var seenT = {};
+      (d.detail||[]).forEach(function(q){
+        if(!q) return;
+        var t = thinkTag(q);
+        if(t === '기타') return;
+        if(!pAgg[t]) pAgg[t] = {tag:t, cnt:0, rounds:0, three:0, nos:[], cores:[], rems:[]};
+        var p = pAgg[t];
+        p.cnt++;
+        if(!seenT[t]){ seenT[t] = 1; p.rounds++; }
+        if(q.three) p.three++;
+        p.nos.push({rid:d.rid, label:d.label, no:q.no});
+        if(q.coreElement && p.cores.length < 6){ if(q.three) p.cores.unshift(q.coreElement); else p.cores.push(q.coreElement); }
+        if(q.remediation && p.rems.length < 4) p.rems.push(q.remediation);
+      });
+    });
+    var thinkPatterns = Object.keys(pAgg).map(function(k){ return pAgg[k]; })
+      .map(function(p){ p.pct = total ? Math.round(p.cnt/total*100) : 0; return p; })
+      .sort(function(a,b){ return (b.rounds-a.rounds) || (b.cnt-a.cnt) || (b.three-a.three); });
+
     return {
       name:nm, yr:st.yr||'', n:n, seq:seq, rids:rids,
       raws:raws, grades:grades, trend:repTrend(raws),
       total_wrong:total, area_pct:areaPct, area_total:areaTotal,
-      recurring:recurring, weak_labels:weakLabels,
+      recurring:recurring, weak_labels:weakLabels, think_patterns:thinkPatterns,
       time_seq:timeSeq, time_mode:timeMode, time_all_same:timeAllSame
     };
   }).filter(function(m){ return m.n>0; });
@@ -609,28 +632,80 @@ function rRoundRows(m){
   return rows;
 }
 
+// ── 틀린 문항을 '사고 동작' 유형으로 분류 (type 우선, 없으면 coreElement·area로 추론) ──
+function thinkTag(q){
+  // 회차마다 type 명칭이 제각각(외적준거/사례적용/표현상효과/인물의심리…)이라 양쪽 명명체계를 폭넓게 매칭
+  var t = (q.type||'').toString();
+  if(t){
+    if(/문법\s*적용/.test(t)) return '문법 적용';
+    if(/외적준거|준거|입장적용|그래프적용|규칙적용|사례적용|자료적용|자료활용|구체적\s*상황|내용의\s*적용|적용/.test(t)) return '〈보기〉·자료 적용';
+    if(/표현비교|전개비교|시어비교|두\s*작품\s*비교|비교|공통|차이|청자반응/.test(t)) return '비교(공통·차이)';
+    if(/내용일치|세부\s*내용|세부내용|부재확인|개념정의|사실\s*확인|핵심\s*정보|핵심\s*내용|내용\s*이해|작품\s*이해/.test(t)) return '세부 내용 확인';
+    if(/어휘|사전적|문맥/.test(t)) return '어휘';
+    if(/서술상|표현상|말하기\s*방식|전개\s*방식|글쓰기\s*방식|발화|매체/.test(t)) return '서술·표현 기법';
+    if(/시구|인물|구절|소재|공간|정서|태도|화자|감상|시어|시의\s*의미|심리|성격|한자\s*성어/.test(t)) return '구절·맥락 해석';
+    if(/추론|이유|빈칸/.test(t)) return '추론';
+  }
+  var c = (q.coreElement||'') + ' ' + (q.source||'');
+  if(/외적\s*준거|〈보기〉|<보기>|\(보기\)|그래프|도식|구체적\s*상황|사례에\s*적용|수치|그림/.test(c)) return '〈보기〉·자료 적용';
+  if(/공통점|차이|두\s*작품|비교/.test(c)) return '비교(공통·차이)';
+  if(/사전적|문맥적\s*의미|바꿔\s*쓸|바꿔\s*쓰/.test(c)) return '어휘';
+  if(/추론|이유|까닭|빈칸/.test(c)) return '추론';
+  if(/서술상|표현상|말하기/.test(c)) return '서술·표현 기법';
+  if(/일치|세부\s*정보|확인/.test(c)) return '세부 내용 확인';
+  if((q.area||'')==='언매') return '문법 적용';
+  return '기타';
+}
+// ── 사고 동작별 처방 (관통 약점에 맞춘 구체적 절차) ──
+function rxFor(tag){
+  var M = {
+    '〈보기〉·자료 적용':'처방 — 〈보기〉·자료의 핵심어 2~3개에 밑줄 → 작품·본문을 먼저 직역해 의미를 확정 → 각 선지를 본문 장면·자료에 화살표로 1:1 대조. 보기보다 본문을 먼저 믿고, 그래프·수치는 표로 옮겨 대입합니다(머리로 풀지 않기).',
+    '비교(공통·차이)':'처방 — (가)/(나) 두 칸 ○× 표를 그려 양쪽 모두 충족하는 것만 공통으로 인정. 한쪽에만 있으면 함정입니다.',
+    '세부 내용 확인':'처방 — 선지마다 근거 문단 번호를 적고 그 문장과 1:1 대조. 주어·조건·시점이 슬쩍 바뀐 곳을 표시합니다.',
+    '어휘':'처방 — 밑줄 단어를 유의어로 치환해 보고, 선지 예문에 같은 치환이 되는지 확인합니다.',
+    '서술·표현 기법':'처방 — 선지의 기법이 ‘쓰인 문장’을 본문에서 직접 짚습니다. 짚히지 않으면 그 선지가 정답(쓰지 않은 것)입니다.',
+    '문법 적용':'처방 — 문법은 2단계로 — (1) 적용 대상인지 먼저 거르고 (2) 규칙을 적용합니다. 1단계 생략이 실점의 원인입니다.',
+    '구절·맥락 해석':'처방 — 그 구절을 말·생각하는 인물의 상태(불안/자족/체념)를 한 단어로 규정하고, 어긋난 선지를 제거합니다.',
+    '추론':'처방 — 본문의 핵심 명제를 한 줄로 못 박고, 선지가 그 조건→결론 방향과 같은지(대우까지) 확인합니다.'
+  };
+  return M[tag] || '처방 — 본문 근거를 손으로 짚어 선지와 1:1 대조하는 절차를 고정합니다.';
+}
+function trimCore(s){ s=(s||'').replace(/\s+/g,' ').trim(); return s.length>58 ? s.slice(0,57)+'…' : s; }
+function evidByRound(nos){
+  var by={};
+  nos.forEach(function(x){ var k=roundShort(x.rid,x.label); (by[k]=by[k]||[]).push(x.no); });
+  return Object.keys(by).map(function(k){
+    var ns=by[k].slice().sort(function(a,b){return (parseInt(a,10)||0)-(parseInt(b,10)||0);});
+    return k+' '+ns.join('·');
+  }).join(' / ');
+}
+
 function rIntegrated(m){
-  var out=[], n=m.n, rec=m.recurring;
-  if(rec.length){
-    var top=rec[0];
-    var kw=(top.rounds===n && n>=2)?"응시한 모든 회차에서":(n+"회 중 "+top.rounds+"회에서");
-    out.push('<b>'+top.area+'</b> 영역이 가장 고질적입니다 — '+kw+' 반복 출현, 누적 오답의 '+top.pct+'%를 차지합니다. 단발 실수가 아니라 구조적으로 약한 영역입니다.');
-    if(rec.length>=2 && rec[1].pct>=20) out.push('그다음은 <b>'+rec[1].area+'</b>('+rec[1].pct+'%)로, 여기서도 회차마다 일정하게 실점이 나옵니다.');
+  var out=[], n=m.n, tp=(m.think_patterns||[]).filter(function(p){return p.cnt>=2 || p.three>=1;});
+  if(!tp.length) tp = (m.think_patterns||[]);
+  if(tp.length){
+    var top=tp[0];
+    var span=(n>=2)?(top.rounds>=n?('응시한 '+n+'회 전부에서'):(n+'회 중 '+top.rounds+'회에서')):'이번 회차에서';
+    out.push('이 학생의 약점은 ‘영역’이 아니라 ‘<b>'+top.tag+'</b>’이라는 사고 동작입니다 — '+span+' 반복되며, 누적 오답의 <b>'+top.pct+'%</b>('+top.cnt+'개)를 차지합니다. ‘몰라서’가 아니라 같은 절차가 비어 있는 구조적 약점입니다.');
+    out.push('반복 출현 — '+evidByRound(top.nos)+'.');
+    if(top.three>=2) out.push('그중 <b>'+top.three+'개가 3점 변별 문항</b>이라, 등급을 가르는 자리에서 같은 실수가 반복됩니다.');
+    if(top.cores.length) out.push('대표 사례 — “'+escape(trimCore(top.cores[0]))+'”.');
+    if(tp.length>=2 && (tp[1].rounds>=2 || tp[1].cnt>=3)){
+      out.push('이어 ‘<b>'+tp[1].tag+'</b>’도 '+(tp[1].rounds>=2?tp[1].rounds+'회에서 ':'')+tp[1].cnt+'개 반복됩니다.');
+    }
+    out.push(rxFor(top.tag));
+    if(n>=2){
+      if(m.trend==="상승") out.push('점수는 우상향('+m.raws[0]+'→'+m.raws[m.raws.length-1]+'점)이지만 이 사고 동작의 누수는 줄지 않았습니다. 여길 직접 잡으면 추가 상승 여지가 큽니다.');
+      else if(m.trend==="하락") out.push('점수 하락('+m.raws[0]+'→'+m.raws[m.raws.length-1]+'점)과 맞물려 이 약점이 최근 회차에서 더 도드라집니다. 최우선으로 보강해야 합니다.');
+      else out.push('점수는 '+m.grades[0]+'~'+m.grades[m.grades.length-1]+'등급대에서 정체 중이며, 그 원인이 바로 이 ‘'+top.tag+'’의 반복 실점입니다. 이 사고 동작 하나를 잡아야 등급이 한 칸 움직입니다.');
+    } else {
+      out.push('단일 응시라 추이는 아직 없지만, 이 사고 동작은 다음 회차에서도 재발 가능성이 높아 미리 잡아두는 게 좋습니다.');
+    }
   } else if(Object.keys(m.area_pct).length){
     var ent=Object.keys(m.area_pct).sort(function(a,b){return m.area_pct[b]-m.area_pct[a];});
-    out.push('오답이 <b>'+ent[0]+'</b>('+m.area_pct[ent[0]]+'%) 쪽에 가장 많이 분포합니다.');
+    out.push('오답이 <b>'+ent[0]+'</b>('+m.area_pct[ent[0]]+'%) 쪽에 가장 많이 분포합니다. (문항 상세가 쌓이면 사고 동작 단위 진단이 활성화됩니다.)');
   }
-  if(m.weak_labels.length){
-    out.push('세부 유형으로는 '+m.weak_labels.slice(0,4).join(" · ")+' 쪽에서 약점이 드러납니다.');
-  }
-  if(n>=2){
-    if(m.trend==="상승") out.push('점수는 우상향('+m.raws[0]+'→'+m.raws[m.raws.length-1]+'점)이지만 위 영역의 누수는 회차 내내 줄지 않았습니다. 이 약점을 직접 잡으면 추가 상승 여지가 큽니다.');
-    else if(m.trend==="하락") out.push('점수 하락('+m.raws[0]+'→'+m.raws[m.raws.length-1]+'점)과 맞물려 위 약점이 최근 회차에서 더 도드라집니다. 우선순위로 보강해야 합니다.');
-    else out.push('점수는 '+m.grades[0]+'~'+m.grades[m.grades.length-1]+'등급대에서 정체 중인데, 그 원인이 위 영역의 반복 실점입니다. 여길 뚫어야 등급이 한 칸 움직입니다.');
-  } else if(m.weak_labels.length || rec.length){
-    out.push('단일 응시라 추이는 아직 없지만, 위 영역은 다음 회차에서도 재발 가능성이 높아 미리 잡아두는 게 좋습니다.');
-  }
-  if(!out.length) out.push('오답 데이터가 충분치 않아 영역 분석은 다음 회차부터 가능합니다.');
+  if(!out.length) out.push('오답 데이터가 충분치 않아 통합 진단은 다음 회차부터 가능합니다.');
   return out;
 }
 
