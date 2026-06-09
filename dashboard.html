@@ -680,30 +680,70 @@ function evidByRound(nos){
   }).join(' / ');
 }
 
+// 약점에 기억에 남는 별명 + 시험장에서 실제 벌어지는 일(사람 말)
+var TAG_NICK = {
+  '〈보기〉·자료 적용':'〈보기〉만 보면 본문을 잊는다',
+  '비교(공통·차이)':'한쪽만 보고 ‘공통점’이라 우긴다',
+  '세부 내용 확인':'주어·조건이 슬쩍 바뀐 걸 놓친다',
+  '어휘':'단어의 진짜 뜻을 문맥에서 안 좁힌다',
+  '서술·표현 기법':'‘있을 법한’ 기법을 본문 확인 없이 고른다',
+  '구절·맥락 해석':'인물 마음을 정반대로 읽는다',
+  '문법 적용':'규칙은 아는데 새 예문에 못 건다',
+  '추론':'본문 논리를 거꾸로 뒤집어 읽는다'
+};
+var TAG_HUMAN = {
+  '〈보기〉·자료 적용':'지문과 작품은 분명히 읽었는데, 〈보기〉·자료·그래프가 붙는 순간 본문이 아니라 〈보기〉의 그럴듯한 말에 끌려 답을 바꿉니다. ‘적용’이라는 마지막 한 걸음을 손이 아니라 머리로 처리하다 주어·방향·순서를 거꾸로 잡는 거예요.',
+  '비교(공통·차이)':'(가)·(나) 두 작품 중 한쪽에만 있는 특징을 ‘둘의 공통점’으로 골라 버립니다. 양쪽을 동시에 확인하는 단 한 번의 점검이 빠진 거예요.',
+  '세부 내용 확인':'본문은 맞게 읽고도, 선지가 주어·조건·시점을 살짝 바꿔 놓은 걸 그냥 통과시킵니다. 한 끗 차이를 못 잡는 거예요.',
+  '어휘':'단어의 기본 뜻만 보고, 그 문맥에서의 좁은 의미로 좁히지 못해 비슷한 오답에 끌립니다.',
+  '서술·표현 기법':'‘발표라면/소설이라면 으레 이렇겠지’ 하는 통념으로, 본문에 실제로 없는 기법을 ‘있다’고 처리합니다.',
+  '구절·맥락 해석':'인물의 마음 상태(불안·자족·체념)를 앞뒤 맥락과 연결하지 못해, 정반대 정서로 읽어 버립니다.',
+  '문법 적용':'개념은 외웠는데, 새 예문이 ‘그 규칙의 적용 대상인지’부터 거르는 1단계를 건너뜁니다.',
+  '추론':'본문의 조건–결론 논리를 거꾸로(대우를 반대로) 읽어, 그럴듯한 반대 선지에 끌립니다.'
+};
+function rxBody(tag){ return rxFor(tag).replace(/^처방\s*[—-]\s*/, ''); }
+
 function rIntegrated(m){
   var out=[], n=m.n, tp=(m.think_patterns||[]).filter(function(p){return p.cnt>=2 || p.three>=1;});
   if(!tp.length) tp = (m.think_patterns||[]);
   if(tp.length){
     var top=tp[0];
-    var span=(n>=2)?(top.rounds>=n?('응시한 '+n+'회 전부에서'):(n+'회 중 '+top.rounds+'회에서')):'이번 회차에서';
-    out.push('이 학생의 약점은 ‘영역’이 아니라 ‘<b>'+top.tag+'</b>’이라는 사고 동작입니다 — '+span+' 반복되며, 누적 오답의 <b>'+top.pct+'%</b>('+top.cnt+'개)를 차지합니다. ‘몰라서’가 아니라 같은 절차가 비어 있는 구조적 약점입니다.');
-    out.push('반복 출현 — '+evidByRound(top.nos)+'.');
-    if(top.three>=2) out.push('그중 <b>'+top.three+'개가 3점 변별 문항</b>이라, 등급을 가르는 자리에서 같은 실수가 반복됩니다.');
-    if(top.cores.length) out.push('대표 사례 — “'+escape(trimCore(top.cores[0]))+'”.');
+    var nick=TAG_NICK[top.tag]||top.tag;
+    var gs=m.grades.filter(Boolean), gmin=gs.length?Math.min.apply(null,gs):0, gmax=gs.length?Math.max.apply(null,gs):0;
+    var lastG=m.grades[m.grades.length-1]||gmax;
+    var band=(gmin&&gmax)?(gmin===gmax?(gmin+'등급'):(gmin+'~'+gmax+'등급대')):'';
+    var span=(n>=2)?(top.rounds>=n?('응시한 '+n+'회 전부, 시험마다'):(n+'회 중 '+top.rounds+'회에서, 매번')):'이번 시험에서';
+
+    // 1) 후크 — '오 이거다'
+    if(gmin && gmin<=3 && band) out.push('점수가 '+band+'에서 더 안 오르는 건 공부량 때문이 아닙니다 — <b>딱 한 가지 습관</b> 때문입니다. 바로 ‘<b>'+nick+'</b>’.');
+    else out.push('이 학생의 점수를 가장 크게 갉아먹는 약점이 하나로 모입니다 — ‘<b>'+nick+'</b>’.');
+
+    // 2) 부정할 수 없는 증거
+    var ev = (n>=2)
+      ? ('우연이 아니에요. '+span+' <b>똑같은 자리</b>에서 무너졌습니다 — '+evidByRound(top.nos)+'.')
+      : ('이번 시험 오답이 이 한 유형에 몰려 있어요 — '+evidByRound(top.nos)+'.');
+    ev += ' (누적 오답의 <b>'+top.pct+'%</b> · '+top.cnt+'문항'+(top.three>=2?(', 그중 등급을 가르는 <b>3점이 '+top.three+'개</b>'):'')+'.)';
+    out.push(ev);
+
+    // 3) 시험장에서 실제 벌어지는 일 (사람 말 + 실제 문항)
+    var hum=TAG_HUMAN[top.tag]||'';
+    if(top.cores.length) hum += ' 가령 이런 문제였어요 — “'+escape(trimCore(top.cores[0]))+'.”';
+    if(hum) out.push(hum);
+
+    // 4) 딱 한 끗 — 희망
+    if(gmin && gmin<=3) out.push('쉬운 문제는 이미 다 맞히고 있어요(현재 '+lastG+'등급). 남은 건 <b>이 한 자리</b>뿐입니다. 여기만 손에 익히면 <b>등급이 바로 한 칸</b> 올라갑니다.');
+    else out.push('이 한 유형의 정답률만 끌어올려도 점수가 가장 크게 움직입니다. 전 영역이 아니라 <b>여기 하나</b>에 먼저 집중하면 됩니다.');
+
+    // 5) 오늘부터 이렇게 (처방)
+    out.push('<b>오늘부터 이렇게</b> — '+rxBody(top.tag));
+
+    // 6) 다음 단계(2차 패턴)
     if(tp.length>=2 && (tp[1].rounds>=2 || tp[1].cnt>=3)){
-      out.push('이어 ‘<b>'+tp[1].tag+'</b>’도 '+(tp[1].rounds>=2?tp[1].rounds+'회에서 ':'')+tp[1].cnt+'개 반복됩니다.');
-    }
-    out.push(rxFor(top.tag));
-    if(n>=2){
-      if(m.trend==="상승") out.push('점수는 우상향('+m.raws[0]+'→'+m.raws[m.raws.length-1]+'점)이지만 이 사고 동작의 누수는 줄지 않았습니다. 여길 직접 잡으면 추가 상승 여지가 큽니다.');
-      else if(m.trend==="하락") out.push('점수 하락('+m.raws[0]+'→'+m.raws[m.raws.length-1]+'점)과 맞물려 이 약점이 최근 회차에서 더 도드라집니다. 최우선으로 보강해야 합니다.');
-      else out.push('점수는 '+m.grades[0]+'~'+m.grades[m.grades.length-1]+'등급대에서 정체 중이며, 그 원인이 바로 이 ‘'+top.tag+'’의 반복 실점입니다. 이 사고 동작 하나를 잡아야 등급이 한 칸 움직입니다.');
-    } else {
-      out.push('단일 응시라 추이는 아직 없지만, 이 사고 동작은 다음 회차에서도 재발 가능성이 높아 미리 잡아두는 게 좋습니다.');
+      out.push('(다음 단계로는 ‘<b>'+tp[1].tag+'</b>’에서도 '+tp[1].cnt+'문항 새고 있어요. 위 약점을 잡은 뒤 이어서 손보면 됩니다.)');
     }
   } else if(Object.keys(m.area_pct).length){
     var ent=Object.keys(m.area_pct).sort(function(a,b){return m.area_pct[b]-m.area_pct[a];});
-    out.push('오답이 <b>'+ent[0]+'</b>('+m.area_pct[ent[0]]+'%) 쪽에 가장 많이 분포합니다. (문항 상세가 쌓이면 사고 동작 단위 진단이 활성화됩니다.)');
+    out.push('오답이 <b>'+ent[0]+'</b>('+m.area_pct[ent[0]]+'%) 쪽에 가장 많이 분포합니다. (문항 상세가 쌓이면 ‘사고 동작’ 단위의 정밀 진단이 활성화됩니다.)');
   }
   if(!out.length) out.push('오답 데이터가 충분치 않아 통합 진단은 다음 회차부터 가능합니다.');
   return out;
