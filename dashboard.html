@@ -2,27 +2,30 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>오름 모의고사 진단 — 강사 대시보드 (고1·고2)</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<title>김가경 국어 연구소 모의고사 진단 — 강사 대시보드 (고1·고2)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root{
-  --green-deep:#4a5a3a;--gold:#c9a84c;--gold-soft:#d4b966;--cream:#f4ede0;
-  --bg-dark:#1a1f15;--bg-card:#252b1f;--bg-card-hover:#2d3326;
-  --text-primary:#f4ede0;--text-secondary:#b8b09e;--text-muted:#7a7466;
-  --border-soft:rgba(201,168,76,0.18);--border-line:rgba(244,237,224,0.08);
-  --danger:#c66;
+:root{--good:#a5aef0;--weak:#d6b06a;
+  --green-deep:#3a3d46;--gold:#a5aef0;--gold-soft:#c5cbf7;--cream:#f6f6f4;
+  --bg-dark:#060607;--bg-card:#0e0f13;--bg-card-hover:#15161c;
+  --text-primary:#f6f6f4;--text-secondary:#b4b5b2;--text-muted:#8a8b88;
+  --border-soft:rgba(246,246,244,0.17);--border-line:rgba(246,246,244,0.085);
+  --danger:#e08f8f;
 }
 *{box-sizing:border-box;word-break:keep-all;overflow-wrap:break-word;margin:0;padding:0}
 html{font-size:16px}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg-dark);color:var(--text-primary);min-height:100vh;line-height:1.7}
+body{font-family:'Pretendard',sans-serif;background:var(--bg-dark);color:var(--text-primary);min-height:100vh;line-height:1.7}
 .wrap{max-width:1200px;margin:0 auto;padding:48px 24px}
-h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:1.85rem;color:var(--cream);margin-bottom:6px}
+h1{font-family:'Pretendard',sans-serif;font-weight:700;font-size:1.85rem;color:var(--cream);margin-bottom:6px}
 .sub{color:var(--text-muted);font-size:0.88rem;margin-bottom:36px;letter-spacing:1px}
 .section{background:var(--bg-card);border:1px solid var(--border-line);border-radius:6px;padding:32px;margin-bottom:24px}
-.section-title{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:0.92rem;letter-spacing:2.5px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border-soft)}
+.section-title{font-family:'Pretendard',sans-serif;color:var(--gold);font-size:0.92rem;letter-spacing:2.5px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border-soft)}
 input,select,button{font-family:inherit;font-size:0.92rem}
 input,select{background:var(--bg-dark);border:1px solid var(--border-line);border-radius:4px;padding:11px 14px;color:var(--cream);transition:border-color 0.15s}
 input:focus,select:focus{outline:none;border-color:var(--gold)}
@@ -32,20 +35,20 @@ button.ghost{background:transparent;color:var(--text-primary);border:1px solid v
 button.ghost:hover{background:var(--bg-card-hover);border-color:var(--gold);color:var(--gold)}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .error{color:var(--danger);padding:14px 18px;background:rgba(198,102,102,0.1);border-radius:4px;margin:14px 0;font-size:0.88rem;border:1px solid rgba(198,102,102,0.3)}
-.ok{color:var(--cream);padding:14px 18px;background:rgba(74,90,58,0.2);border-radius:4px;margin:14px 0;font-size:0.88rem;border:1px solid var(--green-deep)}
+.ok{color:var(--cream);padding:14px 18px;background:rgba(165,174,240,0.2);border-radius:4px;margin:14px 0;font-size:0.88rem;border:1px solid var(--green-deep)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px}
 .stat-card{background:var(--bg-dark);border:1px solid var(--border-line);border-radius:5px;padding:18px;text-align:center}
 .stat-label{font-size:0.74rem;color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px}
-.stat-num{font-family:'Noto Serif KR',serif;color:var(--gold);font-weight:700;font-size:1.8rem;line-height:1}
+.stat-num{font-family:'Pretendard',sans-serif;color:var(--gold);font-weight:700;font-size:1.8rem;line-height:1}
 table{width:100%;border-collapse:collapse;font-size:0.88rem}
-th{font-family:'Noto Serif KR',serif;color:var(--gold);text-align:left;padding:14px 12px;font-size:0.78rem;letter-spacing:1.5px;font-weight:500;border-bottom:1px solid var(--border-soft)}
+th{font-family:'Pretendard',sans-serif;color:var(--gold);text-align:left;padding:14px 12px;font-size:0.78rem;letter-spacing:1.5px;font-weight:500;border-bottom:1px solid var(--border-soft)}
 td{padding:13px 12px;color:var(--text-secondary);border-bottom:1px solid var(--border-line);font-size:0.88rem}
 tr:hover td{background:var(--bg-card-hover);color:var(--cream)}
 .tag{display:inline-block;padding:2px 8px;border-radius:9px;font-size:0.72rem;letter-spacing:0.5px}
-.tag-lm{background:rgba(74,90,58,0.4);color:var(--cream);border:1px solid var(--green-deep)}
-.tag-hs{background:rgba(201,168,76,0.12);color:var(--gold-soft);border:1px solid rgba(201,168,76,0.3)}
-.tag-grade{background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:500}
-.tag-yr{background:rgba(74,90,58,0.4);color:var(--cream);border:1px solid var(--green-deep);font-weight:500}
+.tag-lm{background:rgba(165,174,240,0.4);color:var(--cream);border:1px solid var(--green-deep)}
+.tag-hs{background:rgba(165,174,240,0.12);color:var(--gold-soft);border:1px solid rgba(165,174,240,0.3)}
+.tag-grade{background:rgba(165,174,240,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:500}
+.tag-yr{background:rgba(165,174,240,0.4);color:var(--cream);border:1px solid var(--green-deep);font-weight:500}
 .empty{text-align:center;color:var(--text-muted);padding:48px 0;font-style:italic;font-size:0.92rem}
 .hide{display:none}
 @media (max-width:640px){
@@ -58,7 +61,7 @@ tr:hover td{background:var(--bg-card-hover);color:var(--cream)}
 
 /* ── 탭 ── */
 .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border-soft)}
-.tab{background:transparent;color:var(--text-muted);border:none;border-bottom:2px solid transparent;padding:12px 22px;font-size:0.9rem;font-weight:500;letter-spacing:0.5px;cursor:pointer;border-radius:0;font-family:'Noto Serif KR',serif}
+.tab{background:transparent;color:var(--text-muted);border:none;border-bottom:2px solid transparent;padding:12px 22px;font-size:0.9rem;font-weight:500;letter-spacing:0.5px;cursor:pointer;border-radius:0;font-family:'Pretendard',sans-serif}
 .tab:hover{color:var(--text-secondary);background:transparent}
 .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
 
@@ -76,15 +79,15 @@ tr:hover td{background:var(--bg-card-hover);color:var(--cream)}
 .repcard{background:var(--bg-card);border:1px solid var(--border-line);border-radius:8px;padding:30px 32px;margin-bottom:22px;position:relative;overflow:hidden}
 .repcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:.7}
 .rc-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:1px solid var(--border-soft);margin-bottom:20px}
-.rc-name{font-family:'Noto Serif KR',serif;font-size:1.5rem;font-weight:700;color:var(--cream)}
+.rc-name{font-family:'Pretendard',sans-serif;font-size:1.5rem;font-weight:700;color:var(--cream)}
 .rc-meta{color:var(--text-muted);font-size:0.82rem;margin-top:4px}
 .rc-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
 .rc-tw{color:var(--text-muted);font-size:0.74rem}
 .rtrend{font-size:0.74rem;font-weight:500;padding:3px 11px;border-radius:18px;letter-spacing:0.5px}
-.rtrend-up{background:rgba(74,90,58,0.4);color:#a8d088;border:1px solid var(--green-deep)}
+.rtrend-up{background:rgba(165,174,240,0.4);color:var(--cream);border:1px solid var(--green-deep)}
 .rtrend-down{background:rgba(198,102,102,0.15);color:#d68a8a;border:1px solid rgba(198,102,102,0.4)}
-.rtrend-keep{background:rgba(201,168,76,0.12);color:var(--gold-soft);border:1px solid rgba(201,168,76,0.3)}
-.rtrend-single{background:rgba(122,116,102,0.18);color:var(--text-muted);border:1px solid var(--border-soft)}
+.rtrend-keep{background:rgba(165,174,240,0.12);color:var(--gold-soft);border:1px solid rgba(165,174,240,0.3)}
+.rtrend-single{background:rgba(246,246,244,0.06);color:var(--text-muted);border:1px solid var(--border-soft)}
 .rpdf-btn{background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:0.72rem;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:500}
 .rpdf-btn:hover{background:var(--gold);color:var(--bg-dark)}
 
@@ -95,7 +98,7 @@ tr:hover td{background:var(--bg-card-hover);color:var(--cream)}
 .rblk-sub{color:var(--text-muted);font-weight:400;font-size:0.72rem;letter-spacing:0}
 .rdonut-wrap{display:flex;align-items:center;gap:20px}
 .rdonut{width:116px;height:116px;flex-shrink:0}
-.rdonut-num{fill:var(--cream);font-size:21px;font-weight:700;font-family:'Noto Serif KR',serif}
+.rdonut-num{fill:var(--cream);font-size:21px;font-weight:700;font-family:'Pretendard',sans-serif}
 .rdonut-lab{fill:var(--text-muted);font-size:10px}
 .rlegend{display:flex;flex-direction:column;gap:8px;flex:1}
 .rlg{display:flex;align-items:center;gap:9px;font-size:0.85rem}
@@ -142,8 +145,8 @@ tr:hover td{background:var(--bg-card-hover);color:var(--cream)}
 <body>
 <div class="wrap">
 
-<h1>오름 모의고사 진단 — 강사 대시보드</h1>
-<p class="sub">가경T · 오름 국어 연구소 · 고1·고2</p>
+<h1>김가경 국어 연구소 모의고사 진단 — 강사 대시보드</h1>
+<p class="sub">가경T · 김가경 국어 연구소 · 고1·고2</p>
 
 <!-- 비밀번호 게이트 -->
 <div id="gate" class="section">
@@ -572,7 +575,7 @@ function buildReports(){
   renderReports();
 }
 
-function rGcol(g){ if(!g) return "var(--text-muted)"; if(g<=2) return "#a8d088"; if(g===3) return "var(--gold-soft)"; if(g<=4) return "#d6a96a"; return "#d68a8a"; }
+function rGcol(g){ if(!g) return "var(--text-muted)"; if(g<=2) return "var(--gold)"; if(g===3) return "var(--gold-soft)"; if(g<=4) return "#d6b06a"; return "#e08f8f"; }
 function rTlabel(t){ return {"상승":"▲ 상승","하락":"▼ 하락","유지":"― 유지","단일":"단일 응시"}[t]; }
 function rTcls(t){ return {"상승":"up","하락":"down","유지":"keep","단일":"single"}[t]; }
 
@@ -615,7 +618,7 @@ function rSpark(m){
     bars+='<text x="'+(x+bw/2).toFixed(0)+'" y="'+(H-2)+'" text-anchor="middle" class="rspk-x">'+roundShort(d.rid,d.label)+'</text>';
   });
   var base=H-(80/100)*(H-22)-14;
-  return '<svg viewBox="0 0 '+W+' '+H+'" class="rspark" preserveAspectRatio="xMidYMid meet"><line x1="'+pad+'" y1="'+base.toFixed(1)+'" x2="'+(W-pad)+'" y2="'+base.toFixed(1)+'" stroke="#4a5a3a" stroke-dasharray="3 3"/>'+bars+'</svg>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="rspark" preserveAspectRatio="xMidYMid meet"><line x1="'+pad+'" y1="'+base.toFixed(1)+'" x2="'+(W-pad)+'" y2="'+base.toFixed(1)+'" stroke="#3a3d46" stroke-dasharray="3 3"/>'+bars+'</svg>';
 }
 
 function rRoundRows(m){
@@ -791,7 +794,7 @@ function renderReports(){
       +'<div class="rc-blk rweak"><div class="rblk-t gold">진단 약점 <span class="rblk-sub">(전체 회차 통합 분석)</span></div><ul class="rdlist">'+integ+'</ul></div>'
       +'<div class="rc-blk rtime"><div class="rblk-t gold">시간 관리</div>'+timeBlock+'</div>'
       +'<div class="rc-blk rdiag"><div class="rblk-t gold">진단 종합</div><ul class="rdlist">'+diag+'</ul></div>'
-      +'<div class="rc-foot"><span class="m">가경T · 오름 국어 연구소</span><span class="n">'+(i+1)+' / '+REP.master.length+'</span></div></div>';
+      +'<div class="rc-foot"><span class="m">가경T · 김가경 국어 연구소</span><span class="n">'+(i+1)+' / '+REP.master.length+'</span></div></div>';
   });
   root.innerHTML=html;
   document.querySelectorAll('.rfbtn[data-rf]').forEach(function(b){b.classList.toggle('on',b.dataset.rf==='all');});
@@ -819,11 +822,11 @@ function getJsPDF(){ if(window.jspdf&&window.jspdf.jsPDF) return window.jspdf.js
 function repLibsReady(){ return !!(window.html2canvas&&getJsPDF()); }
 async function repCapture(t){
   var btn=t.querySelector('.rpdf-btn'); var pv=btn?btn.style.visibility:''; if(btn)btn.style.visibility='hidden';
-  var c=await html2canvas(t,{scale:2,backgroundColor:'#252b1f',useCORS:true,logging:false,windowWidth:t.scrollWidth});
+  var c=await html2canvas(t,{scale:2,backgroundColor:'#0e0f13',useCORS:true,logging:false,windowWidth:t.scrollWidth});
   if(btn)btn.style.visibility=pv; return c;
 }
 function repA4(pdf,c,first){
-  var pw=210,ph=297; if(!first)pdf.addPage(); pdf.setFillColor(26,31,21); pdf.rect(0,0,pw,ph,'F');
+  var pw=210,ph=297; if(!first)pdf.addPage(); pdf.setFillColor(6,6,7); pdf.rect(0,0,pw,ph,'F');
   var ratio=c.height/c.width, w=pw, h=w*ratio; if(h>ph){h=ph;w=h/ratio;} var x=(pw-w)/2, y=(ph-h)/2;
   pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',x,y,w,h);
 }
@@ -836,8 +839,8 @@ async function printOneReport(id){
   try{
     var c=await repCapture(t); var jsPDF=getJsPDF(); var ratio=c.height/c.width;
     var pdf=new jsPDF({orientation:(210*ratio)>=210?'portrait':'landscape',unit:'mm',format:[210,210*ratio]});
-    pdf.setFillColor(26,31,21); pdf.rect(0,0,210,210*ratio,'F'); pdf.addImage(c.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,210*ratio);
-    pdf.save('오름_고12_'+name+'_진단리포트.pdf');
+    pdf.setFillColor(6,6,7); pdf.rect(0,0,210,210*ratio,'F'); pdf.addImage(c.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,210*ratio);
+    pdf.save('김가경_고12_'+name+'_진단리포트.pdf');
   }catch(err){alert('PDF 생성 오류: '+(err.message||err));}finally{repHideOverlay();}
 }
 async function printAllReports(){
@@ -857,7 +860,7 @@ async function printAllReports(){
       var c=await repCapture(cards[i]); repA4(pdf,c,i===0); c.width=0; c.height=0;
     }
     repOverlay('PDF 저장 중…'); await new Promise(function(r){setTimeout(r,30);});
-    pdf.save('오름_고12_학생별_개별리포트_전체.pdf');
+    pdf.save('김가경_고12_학생별_개별리포트_전체.pdf');
   }catch(err){alert('전체 PDF 오류: '+(err.message||err));}finally{if(btn)btn.disabled=false;repHideOverlay();}
 }
 function repOverlay(t){var ov=document.getElementById('pdfOverlay');ov.querySelector('.pdf-overlay-text').textContent=t||'PDF 생성 중…';ov.style.display='flex';}
